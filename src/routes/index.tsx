@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -11,45 +13,62 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import {
   CalendarDays,
   Clock,
   MapPin,
-  Users,
   Copy,
   Check,
+  CloudRain,
+  Trophy,
   Megaphone,
   ClipboardCheck,
   Shield,
-  Trophy,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Club Pilot — Team Communication Made Simple" },
+      { title: "Club Pilot — 大学スポーツチーム向け連絡ツール" },
       {
         name: "description",
         content:
-          "Generate professional team announcements, attendance requests and staff briefings in seconds.",
+          "大学スポーツチームの連絡をスマホから一瞬で。試合情報を入力するだけで、お知らせ・出欠確認・スタッフ連絡を自動生成します。",
       },
       { property: "og:title", content: "Club Pilot" },
       {
         property: "og:description",
         content:
-          "Generate professional team announcements, attendance requests and staff briefings in seconds.",
+          "大学スポーツチームの連絡をスマホから一瞬で。",
       },
     ],
   }),
   component: Index,
 });
 
+const CATEGORIES = [
+  { id: "top", label: "トップチーム" },
+  { id: "b", label: "Bチーム" },
+  { id: "c", label: "Cチーム" },
+  { id: "manager", label: "マネージャー" },
+  { id: "all", label: "全員" },
+] as const;
+type CategoryId = (typeof CATEGORIES)[number]["id"];
+
+const EVENT_TYPES = [
+  "リーグ戦",
+  "カップ戦",
+  "練習試合",
+  "練習",
+  "大会",
+  "ミーティング",
+];
+
 type FormState = {
   eventType: string;
-  teamCategory: string;
+  categories: CategoryId[];
   opponent: string;
   date: string;
   meetingTime: string;
@@ -59,11 +78,12 @@ type FormState = {
   items: string;
   attendanceDeadline: string;
   notes: string;
+  rainCancel: boolean;
 };
 
 const initialState: FormState = {
-  eventType: "League Match",
-  teamCategory: "",
+  eventType: "リーグ戦",
+  categories: ["top"],
   opponent: "",
   date: "",
   meetingTime: "",
@@ -73,82 +93,96 @@ const initialState: FormState = {
   items: "",
   attendanceDeadline: "",
   notes: "",
+  rainCancel: false,
 };
 
-function formatDate(d: string) {
-  if (!d) return "TBC";
-  try {
-    return new Date(d).toLocaleDateString(undefined, {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  } catch {
-    return d;
-  }
+const WEEK = ["日", "月", "火", "水", "木", "金", "土"];
+
+function fmtDate(d: string) {
+  if (!d) return "未定";
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return d;
+  return `${dt.getFullYear()}年${dt.getMonth() + 1}月${dt.getDate()}日(${WEEK[dt.getDay()]})`;
 }
 
-function formatDateTime(d: string) {
-  if (!d) return "TBC";
-  try {
-    return new Date(d).toLocaleString(undefined, {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return d;
-  }
+function fmtDateTime(d: string) {
+  if (!d) return "未定";
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return d;
+  const hh = String(dt.getHours()).padStart(2, "0");
+  const mm = String(dt.getMinutes()).padStart(2, "0");
+  return `${dt.getMonth() + 1}/${dt.getDate()}(${WEEK[dt.getDay()]}) ${hh}:${mm}`;
 }
 
-function buildAnnouncement(f: FormState) {
-  return `📣 ${f.eventType.toUpperCase()} — ${f.teamCategory || "Team"}
-
-We're up against ${f.opponent || "TBC"} on ${formatDate(f.date)}.
-
-🕒 Meet: ${f.meetingTime || "TBC"}
-🏃 Warm-up: ${f.warmupTime || "TBC"}
-🏁 Kick-off: ${f.startTime || "TBC"}
-📍 Venue: ${f.location || "TBC"}
-
-🎒 Bring: ${f.items || "Standard kit"}
-
-${f.notes ? `📝 ${f.notes}\n\n` : ""}Let's go ${f.teamCategory || "team"}! 💪`;
+function labelOf(id: CategoryId) {
+  return CATEGORIES.find((c) => c.id === id)?.label ?? "";
 }
 
-function buildAttendance(f: FormState) {
-  return `✅ ATTENDANCE — ${f.teamCategory || "Team"} vs ${f.opponent || "TBC"}
-
-Please confirm your availability for ${f.eventType.toLowerCase()} on ${formatDate(f.date)}.
-
-🕒 Meet at ${f.meetingTime || "TBC"} • 📍 ${f.location || "TBC"}
-
-Reply ✅ YES or ❌ NO by ${formatDateTime(f.attendanceDeadline)}.
-
-Thanks — please reply promptly so we can finalise the squad.`;
+function rainBlock(f: FormState) {
+  return f.rainCancel
+    ? `\n⚠️ 雨天中止の可能性あり\n当日の天候により中止となる場合があります。中止判断は当日朝にご連絡します。\n`
+    : "";
 }
 
-function buildStaff(f: FormState) {
-  return `🛡️ STAFF BRIEFING — ${f.teamCategory || "Team"} vs ${f.opponent || "TBC"}
+function announcement(f: FormState, cat: CategoryId) {
+  const audience = cat === "all" ? "全員へ" : `${labelOf(cat)}へ`;
+  return `【お知らせ｜${f.eventType}】${audience}
 
-Event: ${f.eventType}
-Date: ${formatDate(f.date)}
-Venue: ${f.location || "TBC"}
+お疲れ様です。次の${f.eventType}の連絡です。
 
-Schedule
-• Squad meet: ${f.meetingTime || "TBC"}
-• Warm-up: ${f.warmupTime || "TBC"}
-• Start: ${f.startTime || "TBC"}
-
-Logistics
-• Player kit: ${f.items || "Standard"}
-• Attendance deadline: ${formatDateTime(f.attendanceDeadline)}
-
-${f.notes ? `Notes\n${f.notes}\n\n` : ""}Please be on site 15 minutes before squad meet. Confirm receipt in the staff group.`;
+▼ 対戦相手：${f.opponent || "未定"}
+▼ 日程：${fmtDate(f.date)}
+▼ 集合：${f.meetingTime || "未定"}
+▼ アップ開始：${f.warmupTime || "未定"}
+▼ 試合開始：${f.startTime || "未定"}
+▼ 場所：${f.location || "未定"}
+▼ 持ち物：${f.items || "通常装備"}
+${rainBlock(f)}${f.notes ? `\n📝 備考\n${f.notes}\n` : ""}
+全員で勝ちにいきましょう。よろしくお願いします！`;
 }
+
+function attendance(f: FormState, cat: CategoryId) {
+  const audience = cat === "all" ? "全員" : labelOf(cat);
+  return `【出欠確認｜${f.eventType}】${audience}
+
+下記${f.eventType}の出欠をお願いします。
+
+・対戦相手：${f.opponent || "未定"}
+・日程：${fmtDate(f.date)}
+・集合：${f.meetingTime || "未定"} ／ 場所：${f.location || "未定"}
+${rainBlock(f)}
+⏰ 回答締切：${fmtDateTime(f.attendanceDeadline)}
+
+「⭕️ 出席」または「❌ 欠席（理由）」でご返信ください。
+締切までに必ず回答をお願いします。`;
+}
+
+function staff(f: FormState, cat: CategoryId) {
+  const audience = cat === "manager" ? "マネージャー各位" : `スタッフ各位（${labelOf(cat)}）`;
+  return `【スタッフ連絡｜${f.eventType}】${audience}
+
+▼ 試合概要
+・対戦相手：${f.opponent || "未定"}
+・日程：${fmtDate(f.date)}
+・場所：${f.location || "未定"}
+
+▼ タイムスケジュール
+・集合：${f.meetingTime || "未定"}
+・アップ開始：${f.warmupTime || "未定"}
+・試合開始：${f.startTime || "未定"}
+
+▼ 準備物
+・選手持ち物：${f.items || "通常装備"}
+・出欠締切：${fmtDateTime(f.attendanceDeadline)}
+${rainBlock(f)}${f.notes ? `\n▼ 備考\n${f.notes}\n` : ""}
+集合15分前までに現地へお願いします。確認後、スタッフグループにて返信をお願いします。`;
+}
+
+const KINDS = [
+  { id: "announcement", label: "チーム連絡", icon: Megaphone, build: announcement },
+  { id: "attendance", label: "出欠確認", icon: ClipboardCheck, build: attendance },
+  { id: "staff", label: "スタッフ連絡", icon: Shield, build: staff },
+] as const;
 
 function Index() {
   const [form, setForm] = useState<FormState>(initialState);
@@ -157,101 +191,106 @@ function Index() {
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((p) => ({ ...p, [k]: v }));
 
-  const messages = useMemo(
-    () => ({
-      announcement: buildAnnouncement(form),
-      attendance: buildAttendance(form),
-      staff: buildStaff(form),
-    }),
-    [form],
-  );
+  const toggleCat = (id: CategoryId) =>
+    setForm((p) => ({
+      ...p,
+      categories: p.categories.includes(id)
+        ? p.categories.filter((c) => c !== id)
+        : [...p.categories, id],
+    }));
+
+  const outputs = useMemo(() => {
+    const cats = form.categories.length ? form.categories : (["all"] as CategoryId[]);
+    return KINDS.map((k) => ({
+      ...k,
+      blocks: cats.map((c) => ({
+        cat: c,
+        catLabel: labelOf(c),
+        text: k.build(form, c),
+      })),
+    }));
+  }, [form]);
 
   const copy = async (key: string, text: string) => {
     await navigator.clipboard.writeText(text);
     setCopied(key);
-    toast.success("Copied to clipboard");
-    setTimeout(() => setCopied(null), 1800);
+    toast.success("コピーしました");
+    setTimeout(() => setCopied(null), 1600);
+  };
+
+  const copyAll = async (kindId: string, blocks: { text: string }[]) => {
+    await navigator.clipboard.writeText(blocks.map((b) => b.text).join("\n\n―――\n\n"));
+    setCopied(`${kindId}-all`);
+    toast.success("すべてコピーしました");
+    setTimeout(() => setCopied(null), 1600);
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-12">
       <Toaster position="top-center" />
 
       {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <div
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-primary-foreground"
-              style={{ background: "var(--gradient-hero)" }}
-            >
-              <Trophy className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="truncate text-lg font-extrabold tracking-tight sm:text-xl">
-                Club Pilot
-              </h1>
-              <p className="truncate text-xs text-muted-foreground">
-                Team communication, sorted.
-              </p>
-            </div>
+      <header className="sticky top-0 z-20 border-b border-border bg-card/90 backdrop-blur">
+        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
+          <div
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-primary-foreground"
+            style={{ background: "var(--gradient-hero)" }}
+          >
+            <Trophy className="h-4.5 w-4.5" />
           </div>
-          <span className="hidden rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground sm:inline">
-            For Captains, VCs, Managers & Presidents
-          </span>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-base font-extrabold tracking-tight">Club Pilot</h1>
+            <p className="truncate text-[11px] text-muted-foreground">
+              大学スポーツチーム向け 連絡ジェネレーター
+            </p>
+          </div>
         </div>
       </header>
 
-      {/* Hero */}
-      <section
-        className="border-b border-border"
-        style={{ background: "var(--gradient-subtle)" }}
-      >
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-          <h2 className="max-w-2xl text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-            Fill the match details once.{" "}
-            <span
-              className="bg-clip-text text-transparent"
-              style={{ backgroundImage: "var(--gradient-hero)" }}
-            >
-              Send three pro messages
-            </span>{" "}
-            in seconds.
-          </h2>
-          <p className="mt-3 max-w-xl text-sm text-muted-foreground sm:text-base">
-            Announcements for the squad, attendance requests for players, and
-            briefings for staff — generated automatically.
-          </p>
-        </div>
-      </section>
-
-      {/* Main grid */}
-      <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-5">
-        {/* Form */}
+      <main className="mx-auto max-w-3xl space-y-5 px-4 pt-5">
+        {/* Form Card */}
         <section
-          className="rounded-2xl border border-border bg-card p-5 sm:p-6 lg:col-span-3"
+          className="rounded-2xl border border-border bg-card p-4 sm:p-5"
           style={{ boxShadow: "var(--shadow-card)" }}
         >
-          <div className="mb-5 flex items-center gap-2">
-            <Users className="h-4 w-4 text-primary" />
-            <h3 className="text-base font-semibold">Event details</h3>
+          {/* Categories */}
+          <h2 className="text-sm font-semibold">送信先カテゴリー（複数選択可）</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            選択したカテゴリーごとにメッセージが生成されます。
+          </p>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {CATEGORIES.map((c) => {
+              const checked = form.categories.includes(c.id);
+              return (
+                <label
+                  key={c.id}
+                  className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
+                    checked
+                      ? "border-primary bg-primary/5 text-foreground"
+                      : "border-border bg-card text-muted-foreground hover:border-primary/40"
+                  }`}
+                >
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={() => toggleCat(c.id)}
+                  />
+                  <span>{c.label}</span>
+                </label>
+              );
+            })}
           </div>
 
+          <div className="my-5 h-px bg-border" />
+
+          {/* Fields */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Event type">
+            <Field label="イベント種別">
               <Select value={form.eventType} onValueChange={(v) => set("eventType", v)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {[
-                    "League Match",
-                    "Cup Match",
-                    "Friendly",
-                    "Training",
-                    "Tournament",
-                    "Team Event",
-                  ].map((o) => (
+                  {EVENT_TYPES.map((o) => (
                     <SelectItem key={o} value={o}>
                       {o}
                     </SelectItem>
@@ -260,23 +299,15 @@ function Index() {
               </Select>
             </Field>
 
-            <Field label="Team category">
+            <Field label="対戦相手">
               <Input
-                placeholder="e.g. U16 Boys, 1st XI"
-                value={form.teamCategory}
-                onChange={(e) => set("teamCategory", e.target.value)}
-              />
-            </Field>
-
-            <Field label="Opponent" className="sm:col-span-2">
-              <Input
-                placeholder="e.g. Riverside FC"
+                placeholder="例：〇〇大学"
                 value={form.opponent}
                 onChange={(e) => set("opponent", e.target.value)}
               />
             </Field>
 
-            <Field label="Date" icon={<CalendarDays className="h-4 w-4" />}>
+            <Field label="試合日" icon={<CalendarDays className="h-3.5 w-3.5" />}>
               <Input
                 type="date"
                 value={form.date}
@@ -284,15 +315,15 @@ function Index() {
               />
             </Field>
 
-            <Field label="Location" icon={<MapPin className="h-4 w-4" />}>
+            <Field label="場所" icon={<MapPin className="h-3.5 w-3.5" />}>
               <Input
-                placeholder="e.g. Home Ground, Pitch 2"
+                placeholder="例：ホームグラウンド"
                 value={form.location}
                 onChange={(e) => set("location", e.target.value)}
               />
             </Field>
 
-            <Field label="Meeting time" icon={<Clock className="h-4 w-4" />}>
+            <Field label="集合時間" icon={<Clock className="h-3.5 w-3.5" />}>
               <Input
                 type="time"
                 value={form.meetingTime}
@@ -300,7 +331,7 @@ function Index() {
               />
             </Field>
 
-            <Field label="Warm-up time" icon={<Clock className="h-4 w-4" />}>
+            <Field label="アップ開始" icon={<Clock className="h-3.5 w-3.5" />}>
               <Input
                 type="time"
                 value={form.warmupTime}
@@ -308,7 +339,7 @@ function Index() {
               />
             </Field>
 
-            <Field label="Start time" icon={<Clock className="h-4 w-4" />}>
+            <Field label="試合開始" icon={<Clock className="h-3.5 w-3.5" />}>
               <Input
                 type="time"
                 value={form.startTime}
@@ -316,7 +347,7 @@ function Index() {
               />
             </Field>
 
-            <Field label="Attendance deadline">
+            <Field label="出欠締切">
               <Input
                 type="datetime-local"
                 value={form.attendanceDeadline}
@@ -324,96 +355,133 @@ function Index() {
               />
             </Field>
 
-            <Field label="Items to bring" className="sm:col-span-2">
+            <Field label="持ち物" className="sm:col-span-2">
               <Input
-                placeholder="e.g. Full kit, water bottle, shin pads"
+                placeholder="例：ユニフォーム、水筒、すね当て"
                 value={form.items}
                 onChange={(e) => set("items", e.target.value)}
               />
             </Field>
 
-            <Field label="Notes" className="sm:col-span-2">
+            <Field label="備考" className="sm:col-span-2">
               <Textarea
                 rows={3}
-                placeholder="Anything else the team should know"
+                placeholder="その他連絡事項"
                 value={form.notes}
                 onChange={(e) => set("notes", e.target.value)}
               />
             </Field>
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => setForm(initialState)}>
-              Reset
+          {/* Rain toggle */}
+          <label
+            className={`mt-4 flex items-center justify-between gap-3 rounded-xl border p-3 transition ${
+              form.rainCancel ? "border-primary bg-primary/5" : "border-border"
+            }`}
+          >
+            <div className="flex min-w-0 items-center gap-2.5">
+              <CloudRain className="h-4 w-4 shrink-0 text-primary" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium">雨天中止の可能性</p>
+                <p className="text-xs text-muted-foreground">
+                  メッセージに中止条項を追加します
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={form.rainCancel}
+              onCheckedChange={(v) => set("rainCancel", v)}
+            />
+          </label>
+
+          <div className="mt-4 flex justify-end">
+            <Button variant="outline" size="sm" onClick={() => setForm(initialState)}>
+              リセット
             </Button>
           </div>
         </section>
 
-        {/* Output */}
-        <section className="lg:col-span-2">
-          <div
-            className="sticky top-4 rounded-2xl border border-border bg-card p-5 sm:p-6"
-            style={{ boxShadow: "var(--shadow-elegant)" }}
-          >
-            <h3 className="mb-4 text-base font-semibold">Generated messages</h3>
-            <Tabs defaultValue="announcement">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="announcement" className="gap-1.5">
-                  <Megaphone className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Team</span>
-                </TabsTrigger>
-                <TabsTrigger value="attendance" className="gap-1.5">
-                  <ClipboardCheck className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Attendance</span>
-                </TabsTrigger>
-                <TabsTrigger value="staff" className="gap-1.5">
-                  <Shield className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Staff</span>
-                </TabsTrigger>
-              </TabsList>
+        {/* Outputs */}
+        <section className="space-y-4">
+          {form.categories.length === 0 && (
+            <div className="rounded-xl border border-dashed border-border bg-secondary/40 p-4 text-center text-sm text-muted-foreground">
+              送信先カテゴリーを選択してください
+            </div>
+          )}
 
-              {(
-                [
-                  ["announcement", "Team announcement", messages.announcement],
-                  ["attendance", "Attendance request", messages.attendance],
-                  ["staff", "Staff briefing", messages.staff],
-                ] as const
-              ).map(([key, title, text]) => (
-                <TabsContent key={key} value={key} className="mt-4">
-                  <div className="rounded-xl border border-border bg-secondary/40 p-4">
-                    <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      {title}
-                    </p>
-                    <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-foreground">
-                      {text}
-                    </pre>
-                  </div>
-                  <Button
-                    className="mt-3 w-full"
-                    onClick={() => copy(key, text)}
-                  >
-                    {copied === key ? (
-                      <>
-                        <Check className="h-4 w-4" /> Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-4 w-4" /> Copy message
-                      </>
+          {form.categories.length > 0 &&
+            outputs.map((kind) => {
+              const Icon = kind.icon;
+              return (
+                <div
+                  key={kind.id}
+                  className="overflow-hidden rounded-2xl border border-border bg-card"
+                  style={{ boxShadow: "var(--shadow-card)" }}
+                >
+                  <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <div
+                        className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-primary-foreground"
+                        style={{ background: "var(--gradient-hero)" }}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                      </div>
+                      <h3 className="truncate text-sm font-semibold">{kind.label}</h3>
+                    </div>
+                    {kind.blocks.length > 1 && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => copyAll(kind.id, kind.blocks)}
+                      >
+                        {copied === `${kind.id}-all` ? (
+                          <Check className="h-3.5 w-3.5" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                        全てコピー
+                      </Button>
                     )}
-                  </Button>
-                </TabsContent>
-              ))}
-            </Tabs>
-          </div>
+                  </div>
+
+                  <div className="divide-y divide-border">
+                    {kind.blocks.map((b) => {
+                      const key = `${kind.id}-${b.cat}`;
+                      return (
+                        <div key={key} className="p-4">
+                          <div className="mb-2 flex items-center justify-between gap-2">
+                            <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-semibold text-secondary-foreground">
+                              {b.catLabel}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-2"
+                              onClick={() => copy(key, b.text)}
+                            >
+                              {copied === key ? (
+                                <>
+                                  <Check className="h-3.5 w-3.5" /> コピー済
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="h-3.5 w-3.5" /> コピー
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                          <pre className="whitespace-pre-wrap break-words rounded-lg bg-secondary/40 p-3 font-sans text-[13px] leading-relaxed text-foreground">
+                            {b.text}
+                          </pre>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
         </section>
       </main>
-
-      <footer className="border-t border-border py-6">
-        <p className="text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Club Pilot
-        </p>
-      </footer>
     </div>
   );
 }
