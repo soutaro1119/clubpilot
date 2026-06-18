@@ -31,17 +31,40 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Club Pilot — 大学スポーツチーム向け連絡ツール" },
+      { title: "Club Pilot｜大学の部活・サークル・体育会向け 連絡＆出欠確認ツール" },
       {
         name: "description",
         content:
-          "大学スポーツチームの連絡をスマホから一瞬で。試合情報を入力するだけで、お知らせ・出欠確認・スタッフ連絡を自動生成します。",
+          "大学の部活・サークル・スポーツチームの連絡をスマホから一瞬で作成。試合や練習のお知らせ、出欠確認、スタッフ連絡を自動生成。LINEやSlackにそのまま貼れる、無料の大学生向けチーム運営ツールです。",
       },
-      { property: "og:title", content: "Club Pilot" },
+      { property: "og:title", content: "Club Pilot｜大学の部活・サークル・体育会向け 連絡＆出欠確認ツール" },
       {
         property: "og:description",
         content:
-          "大学スポーツチームの連絡をスマホから一瞬で。",
+          "大学スポーツチームの試合・練習連絡をスマホから一瞬で。出欠確認やスタッフ連絡まで自動生成。",
+      },
+      { property: "og:url", content: "https://clubpilot.lovable.app/" },
+      { property: "og:type", content: "website" },
+    ],
+    links: [{ rel: "canonical", href: "https://clubpilot.lovable.app/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "Club Pilot",
+          applicationCategory: "BusinessApplication",
+          operatingSystem: "Web",
+          inLanguage: "ja",
+          description:
+            "大学の部活・サークル・体育会向けの連絡＆出欠確認ツール。試合・練習のお知らせ、出欠確認、スタッフ連絡を自動生成。",
+          audience: {
+            "@type": "Audience",
+            audienceType: "大学の部活・サークル・スポーツチーム",
+          },
+          offers: { "@type": "Offer", price: "0", priceCurrency: "JPY" },
+        }),
       },
     ],
   }),
