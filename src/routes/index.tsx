@@ -22,11 +22,11 @@ import {
   Copy,
   Check,
   CloudRain,
-  Trophy,
   Megaphone,
   ClipboardCheck,
   Shield,
 } from "lucide-react";
+import logoAsset from "@/assets/clubpilot-logo.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -256,11 +256,12 @@ function Index() {
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-border bg-card/90 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
-          <div
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-primary-foreground"
-            style={{ background: "var(--gradient-hero)" }}
-          >
-            <Trophy className="h-4.5 w-4.5" />
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-primary-foreground">
+            <img
+              src={logoAsset.url}
+              alt="Club Pilot"
+              className="h-6 w-6 object-contain"
+            />
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-base font-extrabold tracking-tight">Club Pilot</h1>
