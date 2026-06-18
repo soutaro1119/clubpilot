@@ -81,6 +81,7 @@ const CATEGORIES = [
 type CategoryId = (typeof CATEGORIES)[number]["id"];
 
 const EVENT_TYPES = [
+  "イベント",
   "リーグ戦",
   "カップ戦",
   "練習試合",
