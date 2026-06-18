@@ -256,11 +256,14 @@ function Index() {
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-border bg-card/90 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-primary-foreground">
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl"
+            style={{ background: "var(--gradient-hero)" }}
+          >
             <img
               src={logoAsset.url}
               alt="Club Pilot"
-              className="h-6 w-6 object-contain"
+              className="h-7 w-7 object-contain"
             />
           </div>
           <div className="min-w-0 flex-1">
