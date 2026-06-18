@@ -86,8 +86,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "Club Pilot" },
-      { name: "twitter:description", content: "大学スポーツ団体向けAI運営アシスタント
-練習・試合連絡、出欠確認、チーム運営をシンプルに。" },
+      { name: "twitter:description", content: "大学スポーツ団体向けAI運営アシスタント。練習・試合連絡、出欠確認、チーム運営をシンプルに。" },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/b8758092-b8a9-4e05-998c-c7ea621404d7" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/b8758092-b8a9-4e05-998c-c7ea621404d7" },
     ],
