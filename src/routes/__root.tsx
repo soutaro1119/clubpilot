@@ -78,12 +78,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Club Pilot" },
-      { name: "description", content: "大学スポーツ団体向けAI運営アシスタント
-練習・試合連絡、出欠確認、チーム運営をシンプルに。" },
+      { name: "description", content: "大学スポーツ団体向けAI運営アシスタント。練習・試合連絡、出欠確認、チーム運営をシンプルに。" },
       { name: "author", content: "Lovable" },
       { property: "og:title", content: "Club Pilot" },
-      { property: "og:description", content: "大学スポーツ団体向けAI運営アシスタント
-練習・試合連絡、出欠確認、チーム運営をシンプルに。" },
+      { property: "og:description", content: "大学スポーツ団体向けAI運営アシスタント。練習・試合連絡、出欠確認、チーム運営をシンプルに。" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
