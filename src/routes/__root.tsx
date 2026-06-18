@@ -77,16 +77,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Club Pilot" },
-      { name: "description", content: "大学スポーツ団体向けAI運営アシスタント。練習・試合連絡、出欠確認、チーム運営をシンプルに。" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Club Pilot" },
-      { property: "og:description", content: "大学スポーツ団体向けAI運営アシスタント。練習・試合連絡、出欠確認、チーム運営をシンプルに。" },
+      { title: "Club Pilot｜大学の部活・スポーツチーム向け 連絡ツール" },
+      { name: "description", content: "大学の部活・スポーツチームの連絡をスマホで一瞬で作成。試合・練習のお知らせ、出欠確認、スタッフ連絡を自動生成する大学生向け運営ツールです。" },
+      { name: "keywords", content: "大学 部活, 大学 サークル, 大学 スポーツチーム, 体育会, 部活 連絡ツール, 出欠確認, LINE 連絡, チーム運営, マネージャー, 試合連絡, 部活アプリ" },
+      { name: "author", content: "Club Pilot" },
+      { property: "og:site_name", content: "Club Pilot" },
+      { property: "og:title", content: "Club Pilot｜大学の部活・スポーツチーム向け 連絡ツール" },
+      { property: "og:description", content: "大学の部活・サークル・体育会の試合や練習の連絡をスマホから一瞬で。出欠確認・スタッフ連絡まで自動生成。" },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Club Pilot" },
-      { name: "twitter:description", content: "大学スポーツ団体向けAI運営アシスタント。練習・試合連絡、出欠確認、チーム運営をシンプルに。" },
+      { property: "og:locale", content: "ja_JP" },
+      { property: "og:url", content: "https://clubpilot.lovable.app/" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Club Pilot｜大学の部活・スポーツチーム向け 連絡ツール" },
+      { name: "twitter:description", content: "大学の部活・サークル・体育会の連絡をスマホから一瞬で。出欠確認・スタッフ連絡まで自動生成。" },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/b8758092-b8a9-4e05-998c-c7ea621404d7" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/b8758092-b8a9-4e05-998c-c7ea621404d7" },
     ],
@@ -99,6 +102,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap",
       },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Club Pilot",
+          url: "https://clubpilot.lovable.app/",
+          inLanguage: "ja",
+          description: "大学の部活・サークル・体育会の連絡をスマホから一瞬で作成できるチーム運営ツール。",
+        }),
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -108,7 +124,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="ja">
       <head>
         <HeadContent />
       </head>
