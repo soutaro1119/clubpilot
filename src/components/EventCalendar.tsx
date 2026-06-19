@@ -23,13 +23,13 @@ export type CalendarEvent = {
 
 export const CATEGORY_COLORS: Record<
   CalendarCategoryId,
-  { bg: string; text: string; ring: string; label: string }
+  { bg: string; text: string; ring: string; label: string; short: string }
 > = {
-  top: { bg: "bg-rose-500", text: "text-white", ring: "ring-rose-500/30", label: "トップ" },
-  b: { bg: "bg-sky-500", text: "text-white", ring: "ring-sky-500/30", label: "B" },
-  c: { bg: "bg-emerald-500", text: "text-white", ring: "ring-emerald-500/30", label: "C" },
-  manager: { bg: "bg-violet-500", text: "text-white", ring: "ring-violet-500/30", label: "Mgr" },
-  all: { bg: "bg-amber-500", text: "text-white", ring: "ring-amber-500/30", label: "全員" },
+  top: { bg: "bg-rose-500", text: "text-white", ring: "ring-rose-500/30", label: "トップ", short: "トップ" },
+  b: { bg: "bg-sky-500", text: "text-white", ring: "ring-sky-500/30", label: "B", short: "B" },
+  c: { bg: "bg-emerald-500", text: "text-white", ring: "ring-emerald-500/30", label: "C", short: "C" },
+  manager: { bg: "bg-violet-500", text: "text-white", ring: "ring-violet-500/30", label: "Mgr", short: "Mgr" },
+  all: { bg: "bg-amber-500", text: "text-white", ring: "ring-amber-500/30", label: "全員", short: "全" },
 };
 
 const WEEK_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
