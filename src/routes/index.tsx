@@ -520,9 +520,13 @@ function Index() {
             />
           </label>
 
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex flex-wrap justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => setForm(initialState)}>
               リセット
+            </Button>
+            <Button size="sm" onClick={addEventToCalendar}>
+              <CalendarPlus className="h-3.5 w-3.5" />
+              カレンダーに登録
             </Button>
           </div>
         </section>
