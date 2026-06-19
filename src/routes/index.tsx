@@ -397,6 +397,9 @@ function Index() {
                     checked={checked}
                     onCheckedChange={() => toggleCat(c.id)}
                   />
+                  <span
+                    className={`inline-block h-2.5 w-2.5 rounded-full ${CATEGORY_COLORS[c.id].bg}`}
+                  />
                   <span>{c.label}</span>
                 </label>
               );
