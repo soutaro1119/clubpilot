@@ -218,6 +218,87 @@ const KINDS = [
 function Index() {
   const [form, setForm] = useState<FormState>(initialState);
   const [copied, setCopied] = useState<string | null>(null);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+
+  // Load persisted events
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("clubpilot.events");
+      if (raw) setEvents(JSON.parse(raw));
+    } catch {
+      /* noop */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("clubpilot.events", JSON.stringify(events));
+    } catch {
+      /* noop */
+    }
+  }, [events]);
+
+  const addEventToCalendar = () => {
+    if (!form.date) {
+      toast.error("試合日を選択してください");
+      return;
+    }
+    const cats = form.categories.length
+      ? form.categories
+      : (["all"] as CategoryId[]);
+    const titleParts = [form.eventType];
+    if (form.opponent) titleParts.push(`vs ${form.opponent}`);
+    const ev: CalendarEvent = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      date: form.date,
+      title: titleParts.join(" "),
+      eventType: form.eventType,
+      categories: cats,
+      meetingTime: form.meetingTime,
+      warmupTime: form.warmupTime,
+      startTime: form.startTime,
+      location: form.location,
+      opponent: form.opponent,
+      items: form.items,
+      notes: form.notes,
+      attendanceDeadline: form.attendanceDeadline,
+      rainCancel: form.rainCancel,
+    };
+    setEvents((prev) => [...prev, ev]);
+    toast.success("カレンダーに登録しました");
+  };
+
+  const loadEventToForm = (e: CalendarEvent) => {
+    setForm({
+      eventType: e.eventType,
+      categories: e.categories.length
+        ? (e.categories as CategoryId[])
+        : (["all"] as CategoryId[]),
+      opponent: e.opponent ?? "",
+      date: e.date,
+      meetingTime: e.meetingTime ?? "",
+      warmupTime: e.warmupTime ?? "",
+      startTime: e.startTime ?? "",
+      location: e.location ?? "",
+      items: e.items ?? "",
+      attendanceDeadline: e.attendanceDeadline ?? "",
+      notes: e.notes ?? "",
+      rainCancel: !!e.rainCancel,
+    });
+    toast.success("フォームに反映しました");
+    if (typeof window !== "undefined") {
+      setTimeout(() => {
+        document
+          .getElementById("generator-form")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }
+  };
+
+  const deleteEvent = (id: string) => {
+    setEvents((prev) => prev.filter((e) => e.id !== id));
+    toast.success("削除しました");
+  };
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((p) => ({ ...p, [k]: v }));
