@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,8 +25,14 @@ import {
   Megaphone,
   ClipboardCheck,
   Shield,
+  CalendarPlus,
 } from "lucide-react";
 import logoAsset from "@/assets/clubpilot-logo.png.asset.json";
+import {
+  EventCalendar,
+  CATEGORY_COLORS,
+  type CalendarEvent,
+} from "@/components/EventCalendar";
 
 export const Route = createFileRoute("/")({
   head: () => ({
