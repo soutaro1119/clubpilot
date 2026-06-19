@@ -23,13 +23,13 @@ export type CalendarEvent = {
 
 export const CATEGORY_COLORS: Record<
   CalendarCategoryId,
-  { bg: string; text: string; ring: string; label: string }
+  { bg: string; text: string; ring: string; label: string; short: string }
 > = {
-  top: { bg: "bg-rose-500", text: "text-white", ring: "ring-rose-500/30", label: "トップ" },
-  b: { bg: "bg-sky-500", text: "text-white", ring: "ring-sky-500/30", label: "B" },
-  c: { bg: "bg-emerald-500", text: "text-white", ring: "ring-emerald-500/30", label: "C" },
-  manager: { bg: "bg-violet-500", text: "text-white", ring: "ring-violet-500/30", label: "Mgr" },
-  all: { bg: "bg-amber-500", text: "text-white", ring: "ring-amber-500/30", label: "全員" },
+  top: { bg: "bg-rose-500", text: "text-white", ring: "ring-rose-500/30", label: "トップ", short: "トップ" },
+  b: { bg: "bg-sky-500", text: "text-white", ring: "ring-sky-500/30", label: "B", short: "B" },
+  c: { bg: "bg-emerald-500", text: "text-white", ring: "ring-emerald-500/30", label: "C", short: "C" },
+  manager: { bg: "bg-violet-500", text: "text-white", ring: "ring-violet-500/30", label: "Mgr", short: "Mgr" },
+  all: { bg: "bg-amber-500", text: "text-white", ring: "ring-amber-500/30", label: "全員", short: "全" },
 };
 
 const WEEK_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
@@ -140,7 +140,7 @@ export function EventCalendar({
 
       <div className="mt-1 grid grid-cols-7 gap-1">
         {weeks.flat().map((cell, idx) => {
-          if (!cell) return <div key={idx} className="aspect-square" />;
+          if (!cell) return <div key={idx} className="min-h-[52px] sm:min-h-[72px]" />;
           const isToday = cell.key === todayKey;
           const isSelected = cell.key === selectedDate;
           const evs = eventsByDate[cell.key] ?? [];
@@ -150,7 +150,7 @@ export function EventCalendar({
               key={cell.key}
               type="button"
               onClick={() => setSelectedDate(cell.key)}
-              className={`flex aspect-square flex-col items-stretch rounded-lg border p-1 text-left transition ${
+              className={`flex min-h-[52px] flex-col items-stretch rounded-lg border p-1 text-left transition sm:min-h-[72px] ${
                 isSelected
                   ? "border-primary bg-primary/5"
                   : "border-border bg-card hover:border-primary/40"
@@ -169,21 +169,23 @@ export function EventCalendar({
               >
                 {cell.date.getDate()}
               </span>
-              <div className="mt-0.5 flex flex-wrap gap-0.5 overflow-hidden">
-                {evs.slice(0, 3).map((e) => {
+              <div className="mt-0.5 flex flex-1 flex-col gap-[2px] overflow-hidden">
+                {evs.slice(0, 4).map((e) => {
                   const cat = e.categories[0] ?? "all";
                   const c = CATEGORY_COLORS[cat];
                   return (
                     <span
                       key={e.id}
-                      className={`h-1.5 w-1.5 rounded-full ${c.bg}`}
+                      className={`inline-block truncate rounded-sm px-0.5 py-[1px] text-center text-[8px] font-bold leading-tight sm:text-[10px] ${c.bg} ${c.text}`}
                       title={`${c.label}：${e.title}`}
-                    />
+                    >
+                      {c.short}
+                    </span>
                   );
                 })}
-                {evs.length > 3 && (
-                  <span className="text-[9px] leading-none text-muted-foreground">
-                    +{evs.length - 3}
+                {evs.length > 4 && (
+                  <span className="text-center text-[8px] leading-tight text-muted-foreground">
+                    +{evs.length - 4}
                   </span>
                 )}
               </div>
