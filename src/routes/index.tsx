@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,8 +25,14 @@ import {
   Megaphone,
   ClipboardCheck,
   Shield,
+  CalendarPlus,
 } from "lucide-react";
 import logoAsset from "@/assets/clubpilot-logo.png.asset.json";
+import {
+  EventCalendar,
+  CATEGORY_COLORS,
+  type CalendarEvent,
+} from "@/components/EventCalendar";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -88,6 +94,7 @@ const EVENT_TYPES = [
   "練習",
   "大会",
   "ミーティング",
+  "その他",
 ];
 
 type FormState = {
@@ -211,6 +218,87 @@ const KINDS = [
 function Index() {
   const [form, setForm] = useState<FormState>(initialState);
   const [copied, setCopied] = useState<string | null>(null);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+
+  // Load persisted events
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("clubpilot.events");
+      if (raw) setEvents(JSON.parse(raw));
+    } catch {
+      /* noop */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("clubpilot.events", JSON.stringify(events));
+    } catch {
+      /* noop */
+    }
+  }, [events]);
+
+  const addEventToCalendar = () => {
+    if (!form.date) {
+      toast.error("試合日を選択してください");
+      return;
+    }
+    const cats = form.categories.length
+      ? form.categories
+      : (["all"] as CategoryId[]);
+    const titleParts = [form.eventType];
+    if (form.opponent) titleParts.push(`vs ${form.opponent}`);
+    const ev: CalendarEvent = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      date: form.date,
+      title: titleParts.join(" "),
+      eventType: form.eventType,
+      categories: cats,
+      meetingTime: form.meetingTime,
+      warmupTime: form.warmupTime,
+      startTime: form.startTime,
+      location: form.location,
+      opponent: form.opponent,
+      items: form.items,
+      notes: form.notes,
+      attendanceDeadline: form.attendanceDeadline,
+      rainCancel: form.rainCancel,
+    };
+    setEvents((prev) => [...prev, ev]);
+    toast.success("カレンダーに登録しました");
+  };
+
+  const loadEventToForm = (e: CalendarEvent) => {
+    setForm({
+      eventType: e.eventType,
+      categories: e.categories.length
+        ? (e.categories as CategoryId[])
+        : (["all"] as CategoryId[]),
+      opponent: e.opponent ?? "",
+      date: e.date,
+      meetingTime: e.meetingTime ?? "",
+      warmupTime: e.warmupTime ?? "",
+      startTime: e.startTime ?? "",
+      location: e.location ?? "",
+      items: e.items ?? "",
+      attendanceDeadline: e.attendanceDeadline ?? "",
+      notes: e.notes ?? "",
+      rainCancel: !!e.rainCancel,
+    });
+    toast.success("フォームに反映しました");
+    if (typeof window !== "undefined") {
+      setTimeout(() => {
+        document
+          .getElementById("generator-form")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }
+  };
+
+  const deleteEvent = (id: string) => {
+    setEvents((prev) => prev.filter((e) => e.id !== id));
+    toast.success("削除しました");
+  };
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((p) => ({ ...p, [k]: v }));
@@ -276,8 +364,15 @@ function Index() {
       </header>
 
       <main className="mx-auto max-w-3xl space-y-5 px-4 pt-5">
+        <EventCalendar
+          events={events}
+          onSelectEvent={loadEventToForm}
+          onDeleteEvent={deleteEvent}
+        />
+
         {/* Form Card */}
         <section
+          id="generator-form"
           className="rounded-2xl border border-border bg-card p-4 sm:p-5"
           style={{ boxShadow: "var(--shadow-card)" }}
         >
@@ -301,6 +396,9 @@ function Index() {
                   <Checkbox
                     checked={checked}
                     onCheckedChange={() => toggleCat(c.id)}
+                  />
+                  <span
+                    className={`inline-block h-2.5 w-2.5 rounded-full ${CATEGORY_COLORS[c.id].bg}`}
                   />
                   <span>{c.label}</span>
                 </label>
@@ -422,9 +520,13 @@ function Index() {
             />
           </label>
 
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex flex-wrap justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => setForm(initialState)}>
               リセット
+            </Button>
+            <Button size="sm" onClick={addEventToCalendar}>
+              <CalendarPlus className="h-3.5 w-3.5" />
+              カレンダーに登録
             </Button>
           </div>
         </section>
