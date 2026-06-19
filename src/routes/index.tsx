@@ -364,8 +364,15 @@ function Index() {
       </header>
 
       <main className="mx-auto max-w-3xl space-y-5 px-4 pt-5">
+        <EventCalendar
+          events={events}
+          onSelectEvent={loadEventToForm}
+          onDeleteEvent={deleteEvent}
+        />
+
         {/* Form Card */}
         <section
+          id="generator-form"
           className="rounded-2xl border border-border bg-card p-4 sm:p-5"
           style={{ boxShadow: "var(--shadow-card)" }}
         >
