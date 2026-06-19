@@ -94,6 +94,7 @@ const EVENT_TYPES = [
   "練習",
   "大会",
   "ミーティング",
+  "その他",
 ];
 
 type FormState = {
