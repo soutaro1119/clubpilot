@@ -140,7 +140,7 @@ export function EventCalendar({
 
       <div className="mt-1 grid grid-cols-7 gap-1">
         {weeks.flat().map((cell, idx) => {
-          if (!cell) return <div key={idx} className="aspect-square" />;
+          if (!cell) return <div key={idx} className="min-h-[52px] sm:min-h-[72px]" />;
           const isToday = cell.key === todayKey;
           const isSelected = cell.key === selectedDate;
           const evs = eventsByDate[cell.key] ?? [];
@@ -150,7 +150,7 @@ export function EventCalendar({
               key={cell.key}
               type="button"
               onClick={() => setSelectedDate(cell.key)}
-              className={`flex aspect-square flex-col items-stretch rounded-lg border p-1 text-left transition ${
+              className={`flex min-h-[52px] flex-col items-stretch rounded-lg border p-1 text-left transition sm:min-h-[72px] ${
                 isSelected
                   ? "border-primary bg-primary/5"
                   : "border-border bg-card hover:border-primary/40"
@@ -169,21 +169,23 @@ export function EventCalendar({
               >
                 {cell.date.getDate()}
               </span>
-              <div className="mt-0.5 flex flex-wrap gap-0.5 overflow-hidden">
-                {evs.slice(0, 3).map((e) => {
+              <div className="mt-0.5 flex flex-1 flex-col gap-[2px] overflow-hidden">
+                {evs.slice(0, 4).map((e) => {
                   const cat = e.categories[0] ?? "all";
                   const c = CATEGORY_COLORS[cat];
                   return (
                     <span
                       key={e.id}
-                      className={`h-1.5 w-1.5 rounded-full ${c.bg}`}
+                      className={`inline-block truncate rounded-sm px-0.5 py-[1px] text-center text-[8px] font-bold leading-tight sm:text-[10px] ${c.bg} ${c.text}`}
                       title={`${c.label}：${e.title}`}
-                    />
+                    >
+                      {c.short}
+                    </span>
                   );
                 })}
-                {evs.length > 3 && (
-                  <span className="text-[9px] leading-none text-muted-foreground">
-                    +{evs.length - 3}
+                {evs.length > 4 && (
+                  <span className="text-center text-[8px] leading-tight text-muted-foreground">
+                    +{evs.length - 4}
                   </span>
                 )}
               </div>
