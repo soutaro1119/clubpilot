@@ -22,7 +22,7 @@ export type CalendarEvent = {
 };
 
 export const CATEGORY_COLORS: Record<
-  CalendarCategoryId,
+  string,
   { bg: string; text: string; ring: string; label: string; short: string }
 > = {
   top: { bg: "bg-rose-500", text: "text-white", ring: "ring-rose-500/30", label: "トップ", short: "トップ" },
@@ -31,6 +31,24 @@ export const CATEGORY_COLORS: Record<
   manager: { bg: "bg-violet-500", text: "text-white", ring: "ring-violet-500/30", label: "Mgr", short: "Mgr" },
   all: { bg: "bg-amber-500", text: "text-white", ring: "ring-amber-500/30", label: "全員", short: "全" },
 };
+
+const FALLBACK_PALETTE = [
+  { bg: "bg-indigo-500", text: "text-white", ring: "ring-indigo-500/30" },
+  { bg: "bg-pink-500", text: "text-white", ring: "ring-pink-500/30" },
+  { bg: "bg-teal-500", text: "text-white", ring: "ring-teal-500/30" },
+  { bg: "bg-orange-500", text: "text-white", ring: "ring-orange-500/30" },
+  { bg: "bg-lime-600", text: "text-white", ring: "ring-lime-600/30" },
+];
+
+export function colorFor(id: string, label?: string) {
+  const known = CATEGORY_COLORS[id];
+  if (known) return known;
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  const c = FALLBACK_PALETTE[h % FALLBACK_PALETTE.length];
+  const lab = label ?? id;
+  return { ...c, label: lab, short: lab.slice(0, 2) };
+}
 
 const WEEK_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
 
