@@ -191,7 +191,7 @@ export function EventCalendar({
               <div className="mt-0.5 flex flex-1 flex-col gap-[2px] overflow-hidden">
                 {evs.slice(0, 4).map((e) => {
                   const cat = e.categories[0] ?? "all";
-                  const c = CATEGORY_COLORS[cat];
+                  const c = colorFor(cat, e.categoryLabels?.[cat]);
                   return (
                     <span
                       key={e.id}
