@@ -237,7 +237,7 @@ export function EventCalendar({
                 >
                   <div className="flex flex-wrap items-center gap-1">
                     {e.categories.map((c) => {
-                      const col = CATEGORY_COLORS[c];
+                      const col = colorFor(c, e.categoryLabels?.[c]);
                       return (
                         <span
                           key={c}
