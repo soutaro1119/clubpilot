@@ -76,7 +76,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#0b1220" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Club Pilot" },
+      { name: "mobile-web-app-capable", content: "yes" },
       { title: "Club Pilot｜大学の部活・スポーツチーム向け 連絡ツール" },
       { name: "description", content: "大学の部活・スポーツチームの連絡をスマホで一瞬で作成。試合・練習のお知らせ、出欠確認、スタッフ連絡を自動生成する大学生向け運営ツールです。" },
       { name: "keywords", content: "大学 部活, 大学 サークル, 大学 スポーツチーム, 体育会, 部活 連絡ツール, 出欠確認, LINE 連絡, チーム運営, マネージャー, 試合連絡, 部活アプリ" },
@@ -95,6 +100,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon-512.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

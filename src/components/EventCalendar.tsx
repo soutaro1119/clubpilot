@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export type CalendarCategoryId = "top" | "b" | "c" | "manager" | "all";
+export type CalendarCategoryId = string;
 
 export type CalendarEvent = {
   id: string;
@@ -10,6 +10,7 @@ export type CalendarEvent = {
   title: string;
   eventType: string;
   categories: CalendarCategoryId[];
+  categoryLabels?: Record<string, string>;
   meetingTime?: string;
   warmupTime?: string;
   startTime?: string;
@@ -22,7 +23,7 @@ export type CalendarEvent = {
 };
 
 export const CATEGORY_COLORS: Record<
-  CalendarCategoryId,
+  string,
   { bg: string; text: string; ring: string; label: string; short: string }
 > = {
   top: { bg: "bg-rose-500", text: "text-white", ring: "ring-rose-500/30", label: "トップ", short: "トップ" },
@@ -31,6 +32,24 @@ export const CATEGORY_COLORS: Record<
   manager: { bg: "bg-violet-500", text: "text-white", ring: "ring-violet-500/30", label: "Mgr", short: "Mgr" },
   all: { bg: "bg-amber-500", text: "text-white", ring: "ring-amber-500/30", label: "全員", short: "全" },
 };
+
+const FALLBACK_PALETTE = [
+  { bg: "bg-indigo-500", text: "text-white", ring: "ring-indigo-500/30" },
+  { bg: "bg-pink-500", text: "text-white", ring: "ring-pink-500/30" },
+  { bg: "bg-teal-500", text: "text-white", ring: "ring-teal-500/30" },
+  { bg: "bg-orange-500", text: "text-white", ring: "ring-orange-500/30" },
+  { bg: "bg-lime-600", text: "text-white", ring: "ring-lime-600/30" },
+];
+
+export function colorFor(id: string, label?: string) {
+  const known = CATEGORY_COLORS[id];
+  if (known) return known;
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  const c = FALLBACK_PALETTE[h % FALLBACK_PALETTE.length];
+  const lab = label ?? id;
+  return { ...c, label: lab, short: lab.slice(0, 2) };
+}
 
 const WEEK_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
 
@@ -172,7 +191,7 @@ export function EventCalendar({
               <div className="mt-0.5 flex flex-1 flex-col gap-[2px] overflow-hidden">
                 {evs.slice(0, 4).map((e) => {
                   const cat = e.categories[0] ?? "all";
-                  const c = CATEGORY_COLORS[cat];
+                  const c = colorFor(cat, e.categoryLabels?.[cat]);
                   return (
                     <span
                       key={e.id}
@@ -218,7 +237,7 @@ export function EventCalendar({
                 >
                   <div className="flex flex-wrap items-center gap-1">
                     {e.categories.map((c) => {
-                      const col = CATEGORY_COLORS[c];
+                      const col = colorFor(c, e.categoryLabels?.[c]);
                       return (
                         <span
                           key={c}

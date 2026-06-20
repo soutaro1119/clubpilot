@@ -1,0 +1,16 @@
+{
+  "name": "Club Pilot",
+  "short_name": "ClubPilot",
+  "description": "大学の部活・サークル・体育会のためのチーム管理プラットフォーム",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "lang": "ja",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
