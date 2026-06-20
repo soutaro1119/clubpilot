@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export type CalendarCategoryId = "top" | "b" | "c" | "manager" | "all";
+export type CalendarCategoryId = string;
 
 export type CalendarEvent = {
   id: string;
@@ -10,6 +10,7 @@ export type CalendarEvent = {
   title: string;
   eventType: string;
   categories: CalendarCategoryId[];
+  categoryLabels?: Record<string, string>;
   meetingTime?: string;
   warmupTime?: string;
   startTime?: string;
