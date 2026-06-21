@@ -65,7 +65,7 @@ function fmtDateTime(d: string) {
   const mm = String(dt.getMinutes()).padStart(2, "0");
   return `${dt.getMonth() + 1}/${dt.getDate()}(${WEEK[dt.getDay()]}) ${hh}:${mm}`;
 }
-const reactionsBlock = `\n―――\n👍 ＝ 出席\n❤️ ＝ 欠席\n😮 ＝ 遅刻・保留\nスタンプで回答お願いします！`;
+const reactionsBlock = `\n―――\n📱 Club Pilot アプリ内で「出席 / 欠席 / 遅刻・保留」をタップして回答してください。\n（このトークでスタンプを返す必要はありません）`;
 
 export function LeaderDashboard() {
   const {
@@ -148,8 +148,8 @@ ${itemsLine(f)}${rainBlock(f)}${f.notes ? `\n📝 備考\n${f.notes}\n` : ""}全
 ${rainBlock(f)}
 ⏰ 回答締切：${fmtDateTime(f.attendanceDeadline)}
 
-「⭕️ 出席」または「❌ 欠席（理由）」でご返信ください。
-締切までに必ず回答をお願いします。${reactions()}`;
+📱 回答は Club Pilot アプリのカレンダーから当該予定をタップ → 「出席 / 欠席 / 遅刻・保留」ボタンでお願いします。
+締切までに必ず回答してください。${reactions()}`;
   }
 
   function staffMsg(f: FormState, cat: string) {
