@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
-import { useApp } from "@/lib/app-store";
-import { roleLabel } from "@/lib/app-store";
+import { useApp, roleLabel } from "@/lib/app-store";
 
 function todayKey() {
   const d = new Date();
@@ -20,7 +19,7 @@ export function AttendanceSummary() {
     const map = attendance[eventId] ?? {};
     let attend = 0, absent = 0, late = 0, none = 0;
     for (const m of members) {
-      const s = map[m.email];
+      const s = map[m.email]?.status;
       if (s === "attend") attend++;
       else if (s === "absent") absent++;
       else if (s === "late") late++;
@@ -38,62 +37,73 @@ export function AttendanceSummary() {
         style={{ boxShadow: "var(--shadow-card)" }}
       >
         <h2 className="text-sm font-semibold">出欠状況</h2>
-        <div className="mt-3">
-          <label className="mb-1 block text-xs text-muted-foreground">対象イベント</label>
-          <select
-            value={eventId}
-            onChange={(e) => setEventId(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          >
-            <option value="">選択してください</option>
-            {events.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.date}　{e.title}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {ev && (
+        {events.length === 0 ? (
+          <p className="mt-3 rounded-lg border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+            まだ予定が登録されていません。「ホーム」から予定を登録してください。
+          </p>
+        ) : (
           <>
-            <div className="mt-3 grid grid-cols-4 gap-2 text-center text-xs">
-              <Stat label="出席" value={stats.attend} className="bg-emerald-500/10 text-emerald-600" />
-              <Stat label="欠席" value={stats.absent} className="bg-rose-500/10 text-rose-600" />
-              <Stat label="遅刻" value={stats.late} className="bg-amber-500/10 text-amber-600" />
-              <Stat label="未回答" value={stats.none} className="bg-secondary text-foreground" />
+            <div className="mt-3">
+              <label className="mb-1 block text-xs text-muted-foreground">対象イベント</label>
+              <select
+                value={eventId}
+                onChange={(e) => setEventId(e.target.value)}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+              >
+                <option value="">選択してください</option>
+                {events.map((e) => (
+                  <option key={e.id} value={e.id}>{e.date}　{e.title}</option>
+                ))}
+              </select>
             </div>
 
-            <ul className="mt-3 divide-y divide-border rounded-xl border border-border">
-              {members.map((m) => {
-                const s = attendance[eventId]?.[m.email] ?? null;
-                return (
-                  <li
-                    key={m.email}
-                    className={`flex items-center justify-between gap-3 px-3 py-2 ${
-                      s == null ? "bg-rose-50/60" : ""
-                    }`}
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{m.name}</p>
-                      <p className="text-[11px] text-muted-foreground">{roleLabel(m.role)}</p>
-                    </div>
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                        s === "attend"
-                          ? "bg-emerald-500 text-white"
-                          : s === "absent"
-                            ? "bg-rose-500 text-white"
-                            : s === "late"
-                              ? "bg-amber-500 text-white"
-                              : "bg-rose-200 text-rose-800"
-                      }`}
-                    >
-                      {s === "attend" ? "出席" : s === "absent" ? "欠席" : s === "late" ? "遅刻" : "未回答"}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
+            {ev && (
+              <>
+                <div className="mt-3 grid grid-cols-4 gap-2 text-center text-xs">
+                  <Stat label="出席" value={stats.attend} className="bg-emerald-500/15 text-emerald-400" />
+                  <Stat label="欠席" value={stats.absent} className="bg-rose-500/15 text-rose-400" />
+                  <Stat label="遅刻・保留" value={stats.late} className="bg-amber-500/15 text-amber-400" />
+                  <Stat label="未回答" value={stats.none} className="bg-secondary text-foreground" />
+                </div>
+
+                {members.length === 0 ? (
+                  <p className="mt-3 rounded-lg border border-dashed border-border p-3 text-center text-xs text-muted-foreground">
+                    まだ登録部員がいません
+                  </p>
+                ) : (
+                  <ul className="mt-3 divide-y divide-border rounded-xl border border-border">
+                    {members.map((m) => {
+                      const r = attendance[eventId]?.[m.email];
+                      const s = r?.status ?? null;
+                      return (
+                        <li
+                          key={m.email}
+                          className={`flex items-start justify-between gap-3 px-3 py-2 ${s == null ? "bg-rose-500/5" : ""}`}
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium">{m.name}</p>
+                            <p className="text-[11px] text-muted-foreground">{roleLabel(m.role)}</p>
+                            {r?.reason && (
+                              <p className="mt-0.5 truncate text-[11px] text-muted-foreground">📝 {r.reason}</p>
+                            )}
+                          </div>
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                              s === "attend" ? "bg-emerald-500 text-white"
+                              : s === "absent" ? "bg-rose-500 text-white"
+                              : s === "late" ? "bg-amber-500 text-white"
+                              : "bg-rose-500/20 text-rose-300"
+                            }`}
+                          >
+                            {s === "attend" ? "出席" : s === "absent" ? "欠席" : s === "late" ? "遅刻" : "未回答"}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </>
+            )}
           </>
         )}
       </section>
@@ -112,31 +122,35 @@ export function AttendanceSummary() {
             className="rounded-md border border-border bg-background px-3 py-2 text-sm"
           />
         </div>
-        <ul className="mt-3 divide-y divide-border rounded-xl border border-border">
-          {members.map((m) => {
-            const awake = !!wakeMap[m.email];
-            return (
-              <li
-                key={m.email}
-                className={`flex items-center justify-between gap-3 px-3 py-2 ${
-                  !awake ? "bg-rose-50/60" : ""
-                }`}
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{m.name}</p>
-                  <p className="text-[11px] text-muted-foreground">{roleLabel(m.role)}</p>
-                </div>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                    awake ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"
-                  }`}
+        {members.length === 0 ? (
+          <p className="mt-3 rounded-lg border border-dashed border-border p-3 text-center text-xs text-muted-foreground">
+            まだ登録部員がいません
+          </p>
+        ) : (
+          <ul className="mt-3 divide-y divide-border rounded-xl border border-border">
+            {members.map((m) => {
+              const awake = !!wakeMap[m.email];
+              return (
+                <li
+                  key={m.email}
+                  className={`flex items-center justify-between gap-3 px-3 py-2 ${!awake ? "bg-rose-500/5" : ""}`}
                 >
-                  {awake ? "起床済み" : "未起床"}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{m.name}</p>
+                    <p className="text-[11px] text-muted-foreground">{roleLabel(m.role)}</p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      awake ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"
+                    }`}
+                  >
+                    {awake ? "起床済み" : "未起床"}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
         <p className="mt-2 text-[11px] text-muted-foreground">
           赤くハイライトされた部員はまだ「起きました」を押していません。
         </p>

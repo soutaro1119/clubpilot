@@ -8,6 +8,7 @@ import { LeaderDashboard } from "@/components/LeaderDashboard";
 import { MemberDashboard } from "@/components/MemberDashboard";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { AttendanceSummary } from "@/components/AttendanceSummary";
+import { MyPage } from "@/components/MyPage";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -56,6 +57,7 @@ function Leader() {
     { id: "home", label: "ホーム" },
     { id: "attendance", label: "出欠・起床" },
     { id: "settings", label: "設定" },
+    { id: "mypage", label: "マイページ" },
   ];
   return (
     <>
@@ -64,6 +66,7 @@ function Leader() {
         {tab === "home" && <LeaderDashboard />}
         {tab === "attendance" && <AttendanceSummary />}
         {tab === "settings" && <SettingsPanel />}
+        {tab === "mypage" && <MyPage />}
       </main>
     </>
   );
@@ -71,12 +74,16 @@ function Leader() {
 
 function Member() {
   const [tab, setTab] = useState("home");
-  const tabs = [{ id: "home", label: "ホーム" }];
+  const tabs = [
+    { id: "home", label: "ホーム" },
+    { id: "mypage", label: "マイページ" },
+  ];
   return (
     <>
       <AppHeader tabs={tabs} active={tab} onChange={setTab} />
       <main className="mx-auto max-w-3xl space-y-5 px-4 pt-5">
-        <MemberDashboard />
+        {tab === "home" && <MemberDashboard />}
+        {tab === "mypage" && <MyPage />}
       </main>
     </>
   );
