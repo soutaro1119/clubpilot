@@ -441,6 +441,12 @@ ${rainBlock(f)}${f.notes ? `\n▼ 備考\n${f.notes}\n` : ""}集合15分前ま�
                       <pre className="whitespace-pre-wrap break-words rounded-lg bg-secondary/40 p-3 font-sans text-[13px] leading-relaxed text-foreground">
                         {b.text}
                       </pre>
+                      <Button
+                        className="mt-2 w-full bg-[#06C755] text-white hover:bg-[#05b34c]"
+                        onClick={() => copyAndOpenLine(b.text)}
+                      >
+                        文章をコピーしてLINEを開く
+                      </Button>
                     </div>
                   );
                 })}
