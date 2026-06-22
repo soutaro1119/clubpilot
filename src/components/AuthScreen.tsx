@@ -159,6 +159,17 @@ export function AuthScreen() {
             <p className="text-xs text-muted-foreground">
               チーム内で表示される名前と、所属チームを教えてください。
             </p>
+            <div className="flex items-center gap-3 rounded-xl border border-border bg-secondary/30 p-3">
+              <AvatarPicker
+                profile={{ name: name || "?", avatarUrl }}
+                size={64}
+                onChange={(url) => setAvatarUrl(url)}
+              />
+              <div className="text-xs text-muted-foreground">
+                <p className="font-semibold text-foreground">アイコン写真（任意）</p>
+                <p>タップでライブラリ／カメラから設定</p>
+              </div>
+            </div>
             <div>
               <Label className="mb-1 block text-xs">名前（ユーザー名）</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="例：田中 翔太" />
