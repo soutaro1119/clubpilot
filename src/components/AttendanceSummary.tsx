@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useApp, roleLabel } from "@/lib/app-store";
+import { Avatar } from "@/components/Avatar";
 
 function todayKey() {
   const d = new Date();
