@@ -77,10 +77,12 @@ export function AttendanceSummary() {
                       const r = attendance[eventId]?.[m.email];
                       const s = r?.status ?? null;
                       return (
-                        <li
-                          key={m.email}
-                          className={`flex items-start justify-between gap-3 px-3 py-2 ${s == null ? "bg-rose-500/5" : ""}`}
-                        >
+                      <li
+                        key={m.email}
+                        className={`flex items-start justify-between gap-3 px-3 py-2 ${s == null ? "bg-rose-500/5" : ""}`}
+                      >
+                        <div className="flex min-w-0 items-center gap-2">
+                          <Avatar profile={m} size={32} />
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium">{m.name}</p>
                             <p className="text-[11px] text-muted-foreground">{roleLabel(m.role)}</p>
@@ -88,17 +90,18 @@ export function AttendanceSummary() {
                               <p className="mt-0.5 truncate text-[11px] text-muted-foreground">📝 {r.reason}</p>
                             )}
                           </div>
-                          <span
-                            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                              s === "attend" ? "bg-emerald-500 text-white"
-                              : s === "absent" ? "bg-rose-500 text-white"
-                              : s === "late" ? "bg-amber-500 text-white"
-                              : "bg-rose-500/20 text-rose-300"
-                            }`}
-                          >
-                            {s === "attend" ? "出席" : s === "absent" ? "欠席" : s === "late" ? "遅刻" : "未回答"}
-                          </span>
-                        </li>
+                        </div>
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                            s === "attend" ? "bg-emerald-500 text-white"
+                            : s === "absent" ? "bg-rose-500 text-white"
+                            : s === "late" ? "bg-amber-500 text-white"
+                            : "bg-rose-500/20 text-rose-300"
+                          }`}
+                        >
+                          {s === "attend" ? "出席" : s === "absent" ? "欠席" : s === "late" ? "遅刻" : "未回答"}
+                        </span>
+                      </li>
                       );
                     })}
                   </ul>
