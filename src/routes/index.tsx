@@ -9,6 +9,8 @@ import { MemberDashboard } from "@/components/MemberDashboard";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { AttendanceSummary } from "@/components/AttendanceSummary";
 import { MyPage } from "@/components/MyPage";
+import { FinanceLeader } from "@/components/FinanceLeader";
+import { FinanceMember } from "@/components/FinanceMember";
 
 export const Route = createFileRoute("/")({
   head: () => ({
