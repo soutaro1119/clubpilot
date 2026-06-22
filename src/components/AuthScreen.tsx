@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { ROLE_OPTIONS, useApp, setRemember, type RoleId } from "@/lib/app-store";
 import logoAsset from "@/assets/clubpilot-logo.png.asset.json";
+import { AvatarPicker } from "@/components/AvatarPicker";
 
 type Step = "auth" | "profile";
 type Mode = "login" | "register";
@@ -45,6 +46,7 @@ export function AuthScreen() {
   const [teamMode, setTeamMode] = useState<TeamMode>("create");
   const [team, setTeam] = useState("");
   const [teamPassword, setTeamPassword] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
 
   // a leader role implies they create a team; a member role implies they join one
   const onPickRole = (r: RoleId) => {
@@ -76,7 +78,7 @@ export function AuthScreen() {
     if (!name) return toast.error("名前を入力してください");
     if (!team) return toast.error("チーム名を入力してください");
     if (!teamPassword) return toast.error("チームパスワードを入力してください");
-    const payload = { email: email || "guest@example.com", name, role, team, teamPassword };
+    const payload = { email: email || "guest@example.com", name, role, team, teamPassword, avatarUrl };
     const result =
       teamMode === "create" ? registerNewTeam(payload) : joinExistingTeam(payload);
     if (!result.ok) return toast.error(result.error);
@@ -157,6 +159,17 @@ export function AuthScreen() {
             <p className="text-xs text-muted-foreground">
               チーム内で表示される名前と、所属チームを教えてください。
             </p>
+            <div className="flex items-center gap-3 rounded-xl border border-border bg-secondary/30 p-3">
+              <AvatarPicker
+                profile={{ name: name || "?", avatarUrl }}
+                size={64}
+                onChange={(url) => setAvatarUrl(url)}
+              />
+              <div className="text-xs text-muted-foreground">
+                <p className="font-semibold text-foreground">アイコン写真（任意）</p>
+                <p>タップでライブラリ／カメラから設定</p>
+              </div>
+            </div>
             <div>
               <Label className="mb-1 block text-xs">名前（ユーザー名）</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="例：田中 翔太" />

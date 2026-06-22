@@ -4,9 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Copy, Check, LogOut, Share2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useApp, roleLabel } from "@/lib/app-store";
+import { AvatarPicker } from "@/components/AvatarPicker";
+import { Avatar } from "@/components/Avatar";
 
 export function MyPage() {
-  const { profile, signOut, isLeader, members } = useApp();
+  const { profile, signOut, isLeader, members, updateProfile } = useApp();
   const [copied, setCopied] = useState<string | null>(null);
   if (!profile) return null;
 
@@ -28,11 +30,18 @@ export function MyPage() {
     <div className="space-y-5">
       <section className="rounded-2xl border border-border bg-card p-4 sm:p-5" style={{ boxShadow: "var(--shadow-card)" }}>
         <h2 className="text-sm font-semibold">プロフィール</h2>
-        <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
-          <dt className="text-muted-foreground">名前</dt><dd className="col-span-2 font-medium">{profile.name}</dd>
-          <dt className="text-muted-foreground">立場</dt><dd className="col-span-2 font-medium">{roleLabel(profile.role)}{isLeader ? "（幹部）" : "（部員）"}</dd>
-          <dt className="text-muted-foreground">メール</dt><dd className="col-span-2 truncate">{profile.email}</dd>
-        </dl>
+        <div className="mt-3 flex items-center gap-3">
+          <AvatarPicker
+            profile={profile}
+            size={64}
+            onChange={(url) => updateProfile({ avatarUrl: url })}
+          />
+          <div className="min-w-0">
+            <p className="truncate text-base font-bold">{profile.name}</p>
+            <p className="truncate text-xs text-muted-foreground">{roleLabel(profile.role)}{isLeader ? "（幹部）" : "（部員）"}</p>
+            <p className="truncate text-[11px] text-muted-foreground">{profile.email}</p>
+          </div>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-border bg-card p-4 sm:p-5" style={{ boxShadow: "var(--shadow-card)" }}>
@@ -71,8 +80,11 @@ export function MyPage() {
         </h2>
         <ul className="mt-3 divide-y divide-border rounded-xl border border-border">
           {members.map((m) => (
-            <li key={m.email} className="flex items-center justify-between px-3 py-2 text-sm">
-              <span className="truncate">{m.name}</span>
+            <li key={m.email} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
+              <div className="flex min-w-0 items-center gap-2">
+                <Avatar profile={m} size={28} />
+                <span className="truncate">{m.name}</span>
+              </div>
               <span className="text-[11px] text-muted-foreground">{roleLabel(m.role)}</span>
             </li>
           ))}
