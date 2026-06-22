@@ -135,22 +135,25 @@ export function AttendanceSummary() {
             {members.map((m) => {
               const awake = !!wakeMap[m.email];
               return (
-                <li
-                  key={m.email}
-                  className={`flex items-center justify-between gap-3 px-3 py-2 ${!awake ? "bg-rose-500/5" : ""}`}
-                >
+              <li
+                key={m.email}
+                className={`flex items-center justify-between gap-3 px-3 py-2 ${!awake ? "bg-rose-500/5" : ""}`}
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <Avatar profile={m} size={32} />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{m.name}</p>
                     <p className="text-[11px] text-muted-foreground">{roleLabel(m.role)}</p>
                   </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                      awake ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"
-                    }`}
-                  >
-                    {awake ? "起床済み" : "未起床"}
-                  </span>
-                </li>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    awake ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"
+                  }`}
+                >
+                  {awake ? "起床済み" : "未起床"}
+                </span>
+              </li>
               );
             })}
           </ul>
