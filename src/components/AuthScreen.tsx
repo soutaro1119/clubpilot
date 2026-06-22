@@ -78,7 +78,7 @@ export function AuthScreen() {
     if (!name) return toast.error("名前を入力してください");
     if (!team) return toast.error("チーム名を入力してください");
     if (!teamPassword) return toast.error("チームパスワードを入力してください");
-    const payload = { email: email || "guest@example.com", name, role, team, teamPassword };
+    const payload = { email: email || "guest@example.com", name, role, team, teamPassword, avatarUrl };
     const result =
       teamMode === "create" ? registerNewTeam(payload) : joinExistingTeam(payload);
     if (!result.ok) return toast.error(result.error);
