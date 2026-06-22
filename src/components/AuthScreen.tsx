@@ -46,6 +46,7 @@ export function AuthScreen() {
   const [teamMode, setTeamMode] = useState<TeamMode>("create");
   const [team, setTeam] = useState("");
   const [teamPassword, setTeamPassword] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
 
   // a leader role implies they create a team; a member role implies they join one
   const onPickRole = (r: RoleId) => {
