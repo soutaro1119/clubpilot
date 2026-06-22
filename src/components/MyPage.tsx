@@ -80,8 +80,11 @@ export function MyPage() {
         </h2>
         <ul className="mt-3 divide-y divide-border rounded-xl border border-border">
           {members.map((m) => (
-            <li key={m.email} className="flex items-center justify-between px-3 py-2 text-sm">
-              <span className="truncate">{m.name}</span>
+            <li key={m.email} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
+              <div className="flex min-w-0 items-center gap-2">
+                <Avatar profile={m} size={28} />
+                <span className="truncate">{m.name}</span>
+              </div>
               <span className="text-[11px] text-muted-foreground">{roleLabel(m.role)}</span>
             </li>
           ))}
