@@ -64,6 +64,15 @@ export type FinanceItem = {
 };
 export type FinancePayments = Record<string, Record<string, { paid: boolean; paidAt?: number }>>;
 
+export type Announcement = {
+  id: string;
+  text: string;
+  when: string; // today | tomorrow | this-week | general
+  authorName: string;
+  authorEmail: string;
+  createdAt: number;
+};
+
 const DEFAULT_CATEGORIES: Category[] = [
   { id: "top", label: "トップチーム" },
   { id: "b", label: "Bチーム" },
@@ -113,11 +122,17 @@ type AppState = {
   profile: Profile | null;
   isLeader: boolean;
 
+  login: (
+    email: string,
+    password: string,
+  ) => { ok: true } | { ok: false; error: string };
   registerNewTeam: (
     p: Omit<Profile, "teamId">,
+    password: string,
   ) => { ok: true } | { ok: false; error: string };
   joinExistingTeam: (
     p: Omit<Profile, "teamId">,
+    password: string,
   ) => { ok: true } | { ok: false; error: string };
   updateProfile: (patch: Partial<Profile>) => void;
   signOut: () => void;
@@ -141,12 +156,27 @@ type AppState = {
   addFinanceChargeForAll: (input: { title: string; amount: number; dueDate: string }) => void;
   setPaid: (itemId: string, userEmail: string, paid: boolean) => void;
   deleteFinanceItem: (itemId: string) => void;
+
+  announcements: Announcement[];
+  addAnnouncement: (a: Omit<Announcement, "id" | "createdAt">) => void;
+  deleteAnnouncement: (id: string) => void;
 };
 
 const Ctx = createContext<AppState | null>(null);
 
 const PROFILE_KEY = "cp.profile";
 const REMEMBER_KEY = "cp.remember";
+const ACCOUNTS_KEY = "cp.accounts";
+
+type AccountRecord = { password: string; profile: Profile };
+function loadAccounts(): Record<string, AccountRecord> {
+  return load<Record<string, AccountRecord>>(ACCOUNTS_KEY, {});
+}
+function saveAccount(email: string, rec: AccountRecord) {
+  const all = loadAccounts();
+  all[email.trim().toLowerCase()] = rec;
+  save(ACCOUNTS_KEY, all);
+}
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [profile, setProfileState] = useState<Profile | null>(null);
