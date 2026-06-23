@@ -64,6 +64,15 @@ export type FinanceItem = {
 };
 export type FinancePayments = Record<string, Record<string, { paid: boolean; paidAt?: number }>>;
 
+export type Announcement = {
+  id: string;
+  text: string;
+  when: string; // today | tomorrow | this-week | general
+  authorName: string;
+  authorEmail: string;
+  createdAt: number;
+};
+
 const DEFAULT_CATEGORIES: Category[] = [
   { id: "top", label: "トップチーム" },
   { id: "b", label: "Bチーム" },
@@ -113,11 +122,17 @@ type AppState = {
   profile: Profile | null;
   isLeader: boolean;
 
+  login: (
+    email: string,
+    password: string,
+  ) => { ok: true } | { ok: false; error: string };
   registerNewTeam: (
     p: Omit<Profile, "teamId">,
+    password: string,
   ) => { ok: true } | { ok: false; error: string };
   joinExistingTeam: (
     p: Omit<Profile, "teamId">,
+    password: string,
   ) => { ok: true } | { ok: false; error: string };
   updateProfile: (patch: Partial<Profile>) => void;
   signOut: () => void;
@@ -141,12 +156,27 @@ type AppState = {
   addFinanceChargeForAll: (input: { title: string; amount: number; dueDate: string }) => void;
   setPaid: (itemId: string, userEmail: string, paid: boolean) => void;
   deleteFinanceItem: (itemId: string) => void;
+
+  announcements: Announcement[];
+  addAnnouncement: (a: Omit<Announcement, "id" | "createdAt">) => void;
+  deleteAnnouncement: (id: string) => void;
 };
 
 const Ctx = createContext<AppState | null>(null);
 
 const PROFILE_KEY = "cp.profile";
 const REMEMBER_KEY = "cp.remember";
+const ACCOUNTS_KEY = "cp.accounts";
+
+type AccountRecord = { password: string; profile: Profile };
+function loadAccounts(): Record<string, AccountRecord> {
+  return load<Record<string, AccountRecord>>(ACCOUNTS_KEY, {});
+}
+function saveAccount(email: string, rec: AccountRecord) {
+  const all = loadAccounts();
+  all[email.trim().toLowerCase()] = rec;
+  save(ACCOUNTS_KEY, all);
+}
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [profile, setProfileState] = useState<Profile | null>(null);
@@ -161,6 +191,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [preferences, setPreferences] = useState({ useItems: true, useReactions: true });
   const [financeItems, setFinanceItems] = useState<FinanceItem[]>([]);
   const [financePayments, setFinancePayments] = useState<FinancePayments>({});
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
   // Hydrate profile
   useEffect(() => {
@@ -194,6 +225,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setMembers([]); setAttendanceState({}); setWakeups({});
       setPreferences({ useItems: true, useReactions: true });
       setFinanceItems([]); setFinancePayments({});
+      setAnnouncements([]);
       return;
     }
     const tid = profile.teamId;
@@ -212,6 +244,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPreferences(load(ns(tid, "prefs")!, { useItems: true, useReactions: true }));
     setFinanceItems(load<FinanceItem[]>(ns(tid, "financeItems")!, []));
     setFinancePayments(load<FinancePayments>(ns(tid, "financePayments")!, {}));
+    setAnnouncements(load<Announcement[]>(ns(tid, "announcements")!, []));
   }, [profile, hydrated]);
 
   useEffect(() => {
@@ -230,6 +263,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => { if (hydrated && tid) save(ns(tid, "members")!, members); }, [members, tid, hydrated]);
   useEffect(() => { if (hydrated && tid) save(ns(tid, "financeItems")!, financeItems); }, [financeItems, tid, hydrated]);
   useEffect(() => { if (hydrated && tid) save(ns(tid, "financePayments")!, financePayments); }, [financePayments, tid, hydrated]);
+  useEffect(() => { if (hydrated && tid) save(ns(tid, "announcements")!, announcements); }, [announcements, tid, hydrated]);
 
   // Cross-tab live sync
   useEffect(() => {
@@ -248,13 +282,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         else if (sub === "eventTypes") setEventTypes(v ?? DEFAULT_EVENT_TYPES);
         else if (sub === "financeItems") setFinanceItems(v ?? []);
         else if (sub === "financePayments") setFinancePayments(v ?? {});
+        else if (sub === "announcements") setAnnouncements(v ?? []);
       } catch { /* noop */ }
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, [tid]);
 
-  const registerNewTeam: AppState["registerNewTeam"] = useCallback((p) => {
+  const registerNewTeam: AppState["registerNewTeam"] = useCallback((p, password) => {
     const name = p.team.trim();
     const pwd = p.teamPassword.trim();
     if (!name) return { ok: false, error: "チーム名を入力してください" };
@@ -265,18 +300,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     const entry: TeamRegistryEntry = { id: uid("team"), name, password: pwd };
     saveRegistry([...reg, entry]);
-    setProfileState({ ...p, team: name, teamPassword: pwd, teamId: entry.id });
+    const next: Profile = { ...p, team: name, teamPassword: pwd, teamId: entry.id };
+    if (p.email) saveAccount(p.email, { password, profile: next });
+    setProfileState(next);
     return { ok: true };
   }, []);
 
-  const joinExistingTeam: AppState["joinExistingTeam"] = useCallback((p) => {
+  const joinExistingTeam: AppState["joinExistingTeam"] = useCallback((p, password) => {
     const name = p.team.trim();
     const pwd = p.teamPassword.trim();
     const reg = loadRegistry();
     const entry = reg.find((t) => normName(t.name) === normName(name));
     if (!entry) return { ok: false, error: "そのチームは見つかりません" };
     if (entry.password !== pwd) return { ok: false, error: "チームパスワードが違います" };
-    setProfileState({ ...p, team: entry.name, teamPassword: pwd, teamId: entry.id });
+    const next: Profile = { ...p, team: entry.name, teamPassword: pwd, teamId: entry.id };
+    if (p.email) saveAccount(p.email, { password, profile: next });
+    setProfileState(next);
+    return { ok: true };
+  }, []);
+
+  const login: AppState["login"] = useCallback((email, password) => {
+    const key = email.trim().toLowerCase();
+    if (!key || !password) return { ok: false, error: "メールとパスワードを入力してください" };
+    const accounts = loadAccounts();
+    const acc = accounts[key];
+    if (!acc) return { ok: false, error: "アカウントが見つかりません。新規登録してください" };
+    if (acc.password !== password) return { ok: false, error: "パスワードが違います" };
+    setProfileState(acc.profile);
     return { ok: true };
   }, []);
 
@@ -289,6 +339,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         map.set(next.email, next);
         return Array.from(map.values());
       });
+      // Sync to account record
+      const accounts = loadAccounts();
+      const key = next.email.trim().toLowerCase();
+      if (accounts[key]) {
+        accounts[key] = { ...accounts[key], profile: next };
+        save(ACCOUNTS_KEY, accounts);
+      }
       return next;
     });
   }, []);
@@ -340,6 +397,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const addAnnouncement: AppState["addAnnouncement"] = useCallback((a) => {
+    setAnnouncements((prev) => [
+      { ...a, id: uid("ann"), createdAt: Date.now() },
+      ...prev,
+    ]);
+  }, []);
+
+  const deleteAnnouncement: AppState["deleteAnnouncement"] = useCallback((id) => {
+    setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+  }, []);
+
   const isLeader = useMemo(() => {
     if (!profile) return false;
     return !!ROLE_OPTIONS.find((r) => r.id === profile.role)?.leader;
@@ -347,7 +415,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const value: AppState = {
     profile, isLeader,
-    registerNewTeam, joinExistingTeam, updateProfile, signOut,
+    login, registerNewTeam, joinExistingTeam, updateProfile, signOut,
     members,
     events, setEvents,
     categories, setCategories,
@@ -357,6 +425,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     preferences, setPreferences,
     financeItems, financePayments,
     addFinanceChargeForAll, setPaid, deleteFinanceItem,
+    announcements, addAnnouncement, deleteAnnouncement,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

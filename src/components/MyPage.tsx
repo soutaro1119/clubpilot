@@ -19,7 +19,7 @@ export function MyPage() {
     setTimeout(() => setCopied(null), 1500);
   };
 
-  const shareText = `Club Pilot にチーム合流のお願いです🙌\nチーム名：${profile.team}\nチームパスワード：${profile.teamPassword}\n\nアプリで「既存のチームに参加」を選んで上記を入力してください。`;
+  const shareText = `Club Pilot にチーム合流のお願いです🙌\nチーム名：${profile.team}\nチームパスワード：${profile.teamPassword}\n\nアプリで「既存のチームに参加」を選んで上記を入力してください。\n\nアプリを開く：https://clubpilot.lovable.app`;
   const shareViaLine = async () => {
     await navigator.clipboard.writeText(shareText);
     toast.success("文章をコピー＆LINEを開きます");

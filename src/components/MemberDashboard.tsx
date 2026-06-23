@@ -11,6 +11,7 @@ import {
 import { Sun, CheckCircle2, X, Clock } from "lucide-react";
 import { useApp } from "@/lib/app-store";
 import { EventCalendar, CATEGORY_COLORS, type CalendarEvent } from "@/components/EventCalendar";
+import { AnnouncementsBoard } from "@/components/AnnouncementsBoard";
 import { toast } from "sonner";
 
 function todayKey() {
@@ -93,6 +94,9 @@ export function MemberDashboard() {
         onSelectEvent={openDialog}
         onDeleteEvent={() => { /* members cannot delete */ }}
       />
+
+      <AnnouncementsBoard />
+
 
       <Dialog open={!!openEvent} onOpenChange={(o) => !o && setOpenEvent(null)}>
         <DialogContent className="max-w-md">

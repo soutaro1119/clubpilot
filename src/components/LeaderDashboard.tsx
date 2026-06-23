@@ -33,6 +33,7 @@ import {
   type CalendarEvent,
 } from "@/components/EventCalendar";
 import { useApp } from "@/lib/app-store";
+import { AnnouncementsBoard } from "@/components/AnnouncementsBoard";
 
 type FormState = {
   eventType: string;
@@ -276,6 +277,9 @@ ${rainBlock(f)}${f.notes ? `\n▼ 備考\n${f.notes}\n` : ""}集合15分前ま�
         onSelectEvent={loadEventToForm}
         onDeleteEvent={deleteEvent}
       />
+
+      <AnnouncementsBoard />
+
 
       <section
         id="generator-form"

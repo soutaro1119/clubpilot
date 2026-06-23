@@ -1,12 +1,5 @@
-import { useRef, useState } from "react";
-import { Camera, ImagePlus, Trash2 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { useRef } from "react";
+import { Camera } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import type { Profile } from "@/lib/app-store";
 import { toast } from "sonner";
@@ -44,9 +37,7 @@ export function AvatarPicker({
   size?: number;
   onChange: (dataUrl: string | undefined) => void;
 }) {
-  const [open, setOpen] = useState(false);
   const libRef = useRef<HTMLInputElement>(null);
-  const camRef = useRef<HTMLInputElement>(null);
 
   const handle = async (f: File | null | undefined) => {
     if (!f) return;
@@ -55,7 +46,6 @@ export function AvatarPicker({
       const url = await fileToCompressedDataUrl(f);
       onChange(url);
       toast.success("アイコンを更新しました");
-      setOpen(false);
     } catch {
       toast.error("画像の読み込みに失敗しました");
     }
@@ -65,7 +55,7 @@ export function AvatarPicker({
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => libRef.current?.click()}
         className="group relative inline-flex shrink-0 items-center justify-center rounded-full ring-2 ring-border transition hover:ring-primary"
         style={{ width: size, height: size }}
         aria-label="アイコンを変更"
@@ -75,46 +65,16 @@ export function AvatarPicker({
           <Camera className="h-3.5 w-3.5" />
         </span>
       </button>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-xs">
-          <DialogHeader>
-            <DialogTitle className="text-base">アイコン写真</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Button className="w-full justify-start" variant="outline" onClick={() => libRef.current?.click()}>
-              <ImagePlus className="h-4 w-4" />写真ライブラリから選ぶ
-            </Button>
-            <Button className="w-full justify-start" variant="outline" onClick={() => camRef.current?.click()}>
-              <Camera className="h-4 w-4" />その場で撮影する
-            </Button>
-            {profile?.avatarUrl && (
-              <Button
-                className="w-full justify-start text-rose-400"
-                variant="ghost"
-                onClick={() => { onChange(undefined); setOpen(false); toast.success("アイコンを削除しました"); }}
-              >
-                <Trash2 className="h-4 w-4" />現在のアイコンを削除
-              </Button>
-            )}
-          </div>
-          <input
-            ref={libRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => handle(e.target.files?.[0])}
-          />
-          <input
-            ref={camRef}
-            type="file"
-            accept="image/*"
-            capture="user"
-            className="hidden"
-            onChange={(e) => handle(e.target.files?.[0])}
-          />
-        </DialogContent>
-      </Dialog>
+      <input
+        ref={libRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          handle(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
     </>
   );
 }
