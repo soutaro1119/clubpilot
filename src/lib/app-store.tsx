@@ -240,6 +240,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setPreferences({ useItems: true, useReactions: true });
       setFinanceItems([]); setFinancePayments({});
       setAnnouncements([]);
+      setReports([]);
+      setMutedPostIds([]); setBlockedEmails([]);
       return;
     }
     const tid = profile.teamId;
