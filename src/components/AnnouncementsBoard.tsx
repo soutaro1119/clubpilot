@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -8,7 +8,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Megaphone, Send, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  Megaphone,
+  Send,
+  Trash2,
+  MoreHorizontal,
+  Flag,
+  UserX,
+  EyeOff,
+  Flame,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/lib/app-store";
 
@@ -34,6 +50,12 @@ export function AnnouncementsBoard() {
     deleteAnnouncement,
     isLeader,
     profile,
+    mutedPostIds,
+    blockedEmails,
+    mutePost,
+    blockUser,
+    reportPost,
+    reports,
   } = useApp();
   const [text, setText] = useState("");
   const [when, setWhen] = useState("today");
@@ -52,6 +74,24 @@ export function AnnouncementsBoard() {
     toast.success("お知らせを投稿しました");
   };
 
+  const myEmail = (profile?.email ?? "").trim().toLowerCase();
+  const reportedIds = useMemo(
+    () => new Set(reports.map((r) => r.postId)),
+    [reports],
+  );
+
+  // Members: hide muted posts and posts from blocked authors.
+  // Leaders: see everything (to moderate), with a flag indicator for reported posts.
+  const visible = useMemo(() => {
+    if (isLeader) return announcements;
+    return announcements.filter((a) => {
+      if (mutedPostIds.includes(a.id)) return false;
+      const author = (a.authorEmail ?? "").trim().toLowerCase();
+      if (author && blockedEmails.includes(author)) return false;
+      return true;
+    });
+  }, [announcements, isLeader, mutedPostIds, blockedEmails]);
+
   return (
     <section
       className="rounded-2xl border border-border bg-card p-4 sm:p-5"
@@ -62,7 +102,7 @@ export function AnnouncementsBoard() {
       </h2>
       <p className="mt-0.5 text-xs text-muted-foreground">
         {isLeader
-          ? "チーム全員に一言で周知できます。"
+          ? "チーム全員に一言で周知できます。通報された投稿には旗マークが表示されます。"
           : "幹部からのお知らせが表示されます。"}
       </p>
 
@@ -95,14 +135,17 @@ export function AnnouncementsBoard() {
       )}
 
       <ul className="mt-3 space-y-2">
-        {announcements.length === 0 && (
+        {visible.length === 0 && (
           <li className="rounded-xl border border-dashed border-border bg-secondary/40 p-4 text-center text-xs text-muted-foreground">
             まだお知らせはありません
           </li>
         )}
-        {announcements.map((a) => {
+        {visible.map((a) => {
           const label =
             WHEN_OPTIONS.find((o) => o.id === a.when)?.label ?? "随時";
+          const authorEmail = (a.authorEmail ?? "").trim().toLowerCase();
+          const isMine = authorEmail && authorEmail === myEmail;
+          const reportCount = reports.filter((r) => r.postId === a.id).length;
           return (
             <li
               key={a.id}
@@ -113,20 +156,79 @@ export function AnnouncementsBoard() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="break-words text-sm text-foreground">{a.text}</p>
-                <p className="mt-0.5 text-[10px] text-muted-foreground">
-                  {a.authorName}・{fmtTime(a.createdAt)}
+                <p className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <span>{a.authorName}・{fmtTime(a.createdAt)}</span>
+                  {isLeader && reportedIds.has(a.id) && (
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-500/15 px-1.5 py-0.5 font-semibold text-rose-500">
+                      <Flame className="h-2.5 w-2.5" />通報{reportCount}
+                    </span>
+                  )}
                 </p>
               </div>
-              {isLeader && a.authorEmail === profile?.email && (
-                <button
-                  type="button"
-                  onClick={() => deleteAnnouncement(a.id)}
-                  className="rounded-md p-1 text-muted-foreground hover:bg-secondary hover:text-rose-400"
-                  aria-label="削除"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              )}
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="rounded-md p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    aria-label="投稿メニュー"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  {!isMine && (
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          mutePost(a.id);
+                          toast.success("この投稿を非表示にしました");
+                        }}
+                      >
+                        <EyeOff className="h-4 w-4" />この投稿を非表示
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          reportPost({
+                            postId: a.id,
+                            authorEmail: a.authorEmail,
+                            text: a.text,
+                            kind: "announcement",
+                          });
+                          toast.success("通報を送信しました");
+                        }}
+                      >
+                        <Flag className="h-4 w-4" />この投稿を通報
+                      </DropdownMenuItem>
+                      {a.authorEmail && (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            blockUser(a.authorEmail);
+                            toast.success("このユーザーをブロックしました");
+                          }}
+                        >
+                          <UserX className="h-4 w-4" />
+                          このユーザーをブロック
+                        </DropdownMenuItem>
+                      )}
+                    </>
+                  )}
+                  {isLeader && (
+                    <>
+                      {!isMine && <DropdownMenuSeparator />}
+                      <DropdownMenuItem
+                        className="text-rose-500 focus:text-rose-500"
+                        onClick={() => {
+                          deleteAnnouncement(a.id);
+                          toast.success("投稿を削除しました");
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />投稿を完全削除（管理者）
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </li>
           );
         })}
