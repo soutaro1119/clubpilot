@@ -261,6 +261,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setFinanceItems(load<FinanceItem[]>(ns(tid, "financeItems")!, []));
     setFinancePayments(load<FinancePayments>(ns(tid, "financePayments")!, {}));
     setAnnouncements(load<Announcement[]>(ns(tid, "announcements")!, []));
+    setReports(load<AppState["reports"]>(ns(tid, "reports")!, []));
+    setMutedPostIds(load<string[]>(`cp.user:${profile.email}.mutedPosts`, []));
+    setBlockedEmails(load<string[]>(`cp.user:${profile.email}.blocked`, []));
   }, [profile, hydrated]);
 
   useEffect(() => {
