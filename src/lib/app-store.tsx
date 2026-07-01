@@ -283,6 +283,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => { if (hydrated && tid) save(ns(tid, "financeItems")!, financeItems); }, [financeItems, tid, hydrated]);
   useEffect(() => { if (hydrated && tid) save(ns(tid, "financePayments")!, financePayments); }, [financePayments, tid, hydrated]);
   useEffect(() => { if (hydrated && tid) save(ns(tid, "announcements")!, announcements); }, [announcements, tid, hydrated]);
+  useEffect(() => { if (hydrated && tid) save(ns(tid, "reports")!, reports); }, [reports, tid, hydrated]);
+  useEffect(() => { if (hydrated && profile) save(`cp.user:${profile.email}.mutedPosts`, mutedPostIds); }, [mutedPostIds, profile, hydrated]);
+  useEffect(() => { if (hydrated && profile) save(`cp.user:${profile.email}.blocked`, blockedEmails); }, [blockedEmails, profile, hydrated]);
 
   // Cross-tab live sync
   useEffect(() => {
