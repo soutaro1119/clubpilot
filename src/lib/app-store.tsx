@@ -332,12 +332,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const joinExistingTeam: AppState["joinExistingTeam"] = useCallback((p, password) => {
     const name = p.team.trim();
     const pwd = p.teamPassword.trim();
+    if (!name) return { ok: false, error: "チーム名を入力してください" };
+    if (!pwd) return { ok: false, error: "チームパスワードを入力してください" };
     const reg = loadRegistry();
     const entry = reg.find((t) => normName(t.name) === normName(name));
-    if (!entry) return { ok: false, error: "そのチームは見つかりません" };
+    if (!entry) return { ok: false, error: "そのチーム名は見つかりません。主将が作成したチーム名（大文字/小文字含む）を再確認してください" };
     if (entry.password !== pwd) return { ok: false, error: "チームパスワードが違います" };
+    if (!p.email) return { ok: false, error: "メールアドレスを入力してください" };
+    if (!password) return { ok: false, error: "パスワードを入力してください" };
     const next: Profile = { ...p, team: entry.name, teamPassword: pwd, teamId: entry.id };
-    if (p.email) saveAccount(p.email, { password, profile: next });
+    saveAccount(p.email, { password, profile: next });
+    // Immediately upsert into team members so join is reflected
+    const memKey = ns(entry.id, "members")!;
+    const list = load<Profile[]>(memKey, []);
+    const map = new Map(list.map((m) => [m.email.trim().toLowerCase(), m] as const));
+    map.set(next.email.trim().toLowerCase(), next);
+    save(memKey, Array.from(map.values()));
     setProfileState(next);
     return { ok: true };
   }, []);
