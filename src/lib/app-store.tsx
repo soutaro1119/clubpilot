@@ -203,6 +203,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [financeItems, setFinanceItems] = useState<FinanceItem[]>([]);
   const [financePayments, setFinancePayments] = useState<FinancePayments>({});
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [reports, setReports] = useState<AppState["reports"]>([]);
+  const [mutedPostIds, setMutedPostIds] = useState<string[]>([]);
+  const [blockedEmails, setBlockedEmails] = useState<string[]>([]);
 
   // Hydrate profile
   useEffect(() => {
