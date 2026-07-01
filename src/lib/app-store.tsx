@@ -305,6 +305,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         else if (sub === "financeItems") setFinanceItems(v ?? []);
         else if (sub === "financePayments") setFinancePayments(v ?? {});
         else if (sub === "announcements") setAnnouncements(v ?? []);
+        else if (sub === "reports") setReports(v ?? []);
       } catch { /* noop */ }
     };
     window.addEventListener("storage", onStorage);
