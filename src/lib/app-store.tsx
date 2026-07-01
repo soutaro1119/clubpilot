@@ -160,6 +160,17 @@ type AppState = {
   announcements: Announcement[];
   addAnnouncement: (a: Omit<Announcement, "id" | "createdAt">) => void;
   deleteAnnouncement: (id: string) => void;
+
+  // Moderation (UGC)
+  mutedPostIds: string[];              // per-viewer
+  blockedEmails: string[];             // per-viewer
+  mutePost: (postId: string) => void;
+  blockUser: (email: string) => void;
+  unblockUser: (email: string) => void;
+  reportPost: (input: { postId: string; authorEmail: string; text: string; kind?: string }) => void;
+  reports: Array<{ id: string; postId: string; authorEmail: string; text: string; kind?: string; reporterEmail: string; createdAt: number }>;
+
+  deleteAccount: () => void;
 };
 
 const Ctx = createContext<AppState | null>(null);
