@@ -160,6 +160,17 @@ type AppState = {
   announcements: Announcement[];
   addAnnouncement: (a: Omit<Announcement, "id" | "createdAt">) => void;
   deleteAnnouncement: (id: string) => void;
+
+  // Moderation (UGC)
+  mutedPostIds: string[];              // per-viewer
+  blockedEmails: string[];             // per-viewer
+  mutePost: (postId: string) => void;
+  blockUser: (email: string) => void;
+  unblockUser: (email: string) => void;
+  reportPost: (input: { postId: string; authorEmail: string; text: string; kind?: string }) => void;
+  reports: Array<{ id: string; postId: string; authorEmail: string; text: string; kind?: string; reporterEmail: string; createdAt: number }>;
+
+  deleteAccount: () => void;
 };
 
 const Ctx = createContext<AppState | null>(null);
@@ -192,6 +203,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [financeItems, setFinanceItems] = useState<FinanceItem[]>([]);
   const [financePayments, setFinancePayments] = useState<FinancePayments>({});
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [reports, setReports] = useState<AppState["reports"]>([]);
+  const [mutedPostIds, setMutedPostIds] = useState<string[]>([]);
+  const [blockedEmails, setBlockedEmails] = useState<string[]>([]);
 
   // Hydrate profile
   useEffect(() => {
@@ -226,6 +240,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setPreferences({ useItems: true, useReactions: true });
       setFinanceItems([]); setFinancePayments({});
       setAnnouncements([]);
+      setReports([]);
+      setMutedPostIds([]); setBlockedEmails([]);
       return;
     }
     const tid = profile.teamId;
@@ -245,6 +261,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setFinanceItems(load<FinanceItem[]>(ns(tid, "financeItems")!, []));
     setFinancePayments(load<FinancePayments>(ns(tid, "financePayments")!, {}));
     setAnnouncements(load<Announcement[]>(ns(tid, "announcements")!, []));
+    setReports(load<AppState["reports"]>(ns(tid, "reports")!, []));
+    setMutedPostIds(load<string[]>(`cp.user:${profile.email}.mutedPosts`, []));
+    setBlockedEmails(load<string[]>(`cp.user:${profile.email}.blocked`, []));
   }, [profile, hydrated]);
 
   useEffect(() => {
@@ -264,6 +283,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => { if (hydrated && tid) save(ns(tid, "financeItems")!, financeItems); }, [financeItems, tid, hydrated]);
   useEffect(() => { if (hydrated && tid) save(ns(tid, "financePayments")!, financePayments); }, [financePayments, tid, hydrated]);
   useEffect(() => { if (hydrated && tid) save(ns(tid, "announcements")!, announcements); }, [announcements, tid, hydrated]);
+  useEffect(() => { if (hydrated && tid) save(ns(tid, "reports")!, reports); }, [reports, tid, hydrated]);
+  useEffect(() => { if (hydrated && profile) save(`cp.user:${profile.email}.mutedPosts`, mutedPostIds); }, [mutedPostIds, profile, hydrated]);
+  useEffect(() => { if (hydrated && profile) save(`cp.user:${profile.email}.blocked`, blockedEmails); }, [blockedEmails, profile, hydrated]);
 
   // Cross-tab live sync
   useEffect(() => {
@@ -283,6 +305,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         else if (sub === "financeItems") setFinanceItems(v ?? []);
         else if (sub === "financePayments") setFinancePayments(v ?? {});
         else if (sub === "announcements") setAnnouncements(v ?? []);
+        else if (sub === "reports") setReports(v ?? []);
       } catch { /* noop */ }
     };
     window.addEventListener("storage", onStorage);
@@ -309,12 +332,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const joinExistingTeam: AppState["joinExistingTeam"] = useCallback((p, password) => {
     const name = p.team.trim();
     const pwd = p.teamPassword.trim();
+    if (!name) return { ok: false, error: "チーム名を入力してください" };
+    if (!pwd) return { ok: false, error: "チームパスワードを入力してください" };
     const reg = loadRegistry();
     const entry = reg.find((t) => normName(t.name) === normName(name));
-    if (!entry) return { ok: false, error: "そのチームは見つかりません" };
+    if (!entry) return { ok: false, error: "そのチーム名は見つかりません。主将が作成したチーム名（大文字/小文字含む）を再確認してください" };
     if (entry.password !== pwd) return { ok: false, error: "チームパスワードが違います" };
+    if (!p.email) return { ok: false, error: "メールアドレスを入力してください" };
+    if (!password) return { ok: false, error: "パスワードを入力してください" };
     const next: Profile = { ...p, team: entry.name, teamPassword: pwd, teamId: entry.id };
-    if (p.email) saveAccount(p.email, { password, profile: next });
+    saveAccount(p.email, { password, profile: next });
+    // Immediately upsert into team members so join is reflected
+    const memKey = ns(entry.id, "members")!;
+    const list = load<Profile[]>(memKey, []);
+    const map = new Map(list.map((m) => [m.email.trim().toLowerCase(), m] as const));
+    map.set(next.email.trim().toLowerCase(), next);
+    save(memKey, Array.from(map.values()));
     setProfileState(next);
     return { ok: true };
   }, []);
@@ -406,7 +439,51 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteAnnouncement: AppState["deleteAnnouncement"] = useCallback((id) => {
     setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+    setReports((prev) => prev.filter((r) => r.postId !== id));
   }, []);
+
+  const mutePost: AppState["mutePost"] = useCallback((postId) => {
+    setMutedPostIds((prev) => (prev.includes(postId) ? prev : [...prev, postId]));
+  }, []);
+  const blockUser: AppState["blockUser"] = useCallback((email) => {
+    const key = email.trim().toLowerCase();
+    if (!key) return;
+    setBlockedEmails((prev) => (prev.includes(key) ? prev : [...prev, key]));
+  }, []);
+  const unblockUser: AppState["unblockUser"] = useCallback((email) => {
+    const key = email.trim().toLowerCase();
+    setBlockedEmails((prev) => prev.filter((e) => e !== key));
+  }, []);
+  const reportPost: AppState["reportPost"] = useCallback((input) => {
+    setReports((prev) => [
+      { id: uid("rep"), ...input, reporterEmail: profile?.email ?? "", createdAt: Date.now() },
+      ...prev,
+    ]);
+    setMutedPostIds((prev) => (prev.includes(input.postId) ? prev : [...prev, input.postId]));
+  }, [profile]);
+
+  const deleteAccount = useCallback(() => {
+    const cur = profile;
+    if (!cur) return;
+    const key = cur.email.trim().toLowerCase();
+    // Remove account record
+    const accounts = loadAccounts();
+    delete accounts[key];
+    save(ACCOUNTS_KEY, accounts);
+    // Remove from team members list
+    if (cur.teamId) {
+      const memKey = ns(cur.teamId, "members")!;
+      const list = load<Profile[]>(memKey, []).filter((m) => m.email.trim().toLowerCase() !== key);
+      save(memKey, list);
+    }
+    // Purge per-user local prefs
+    try {
+      localStorage.removeItem(`cp.user:${cur.email}.mutedPosts`);
+      localStorage.removeItem(`cp.user:${cur.email}.blocked`);
+    } catch { /* noop */ }
+    localStorage.removeItem(PROFILE_KEY);
+    setProfileState(null);
+  }, [profile]);
 
   const isLeader = useMemo(() => {
     if (!profile) return false;
@@ -426,6 +503,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     financeItems, financePayments,
     addFinanceChargeForAll, setPaid, deleteFinanceItem,
     announcements, addAnnouncement, deleteAnnouncement,
+    mutedPostIds, blockedEmails,
+    mutePost, blockUser, unblockUser, reportPost, reports,
+    deleteAccount,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

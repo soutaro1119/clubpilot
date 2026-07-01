@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Trash2, Plus } from "lucide-react";
 import { useApp } from "@/lib/app-store";
 import { toast } from "sonner";
+import { LegalLinks } from "@/components/LegalLinks";
 
 export function SettingsPanel() {
   const { categories, setCategories, eventTypes, setEventTypes } = useApp();
@@ -106,6 +107,8 @@ export function SettingsPanel() {
           </Button>
         </div>
       </section>
+
+      <LegalLinks className="pt-2" />
     </div>
   );
 }

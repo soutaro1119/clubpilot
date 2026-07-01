@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ROLE_OPTIONS, useApp, setRemember, type RoleId } from "@/lib/app-store";
 import logoAsset from "@/assets/clubpilot-logo.png.asset.json";
 import { AvatarPicker } from "@/components/AvatarPicker";
+import { LegalLinks } from "@/components/LegalLinks";
 
 type Step = "auth" | "profile";
 type Mode = "login" | "register";
@@ -207,6 +208,8 @@ export function AuthScreen() {
             </Button>
           </form>
         )}
+
+        <LegalLinks className="mt-5 pt-4 border-t border-border" />
       </div>
     </div>
   );
