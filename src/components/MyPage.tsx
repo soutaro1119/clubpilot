@@ -1,14 +1,29 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Copy, Check, LogOut, Share2, Users } from "lucide-react";
+import { Copy, Check, LogOut, Share2, Users, Trash2, ShieldOff } from "lucide-react";
 import { toast } from "sonner";
 import { useApp, roleLabel } from "@/lib/app-store";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { Avatar } from "@/components/Avatar";
+import { LegalLinks } from "@/components/LegalLinks";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export function MyPage() {
-  const { profile, signOut, isLeader, members, updateProfile } = useApp();
+  const {
+    profile, signOut, isLeader, members, updateProfile,
+    blockedEmails, unblockUser, deleteAccount,
+  } = useApp();
   const [copied, setCopied] = useState<string | null>(null);
   if (!profile) return null;
 
