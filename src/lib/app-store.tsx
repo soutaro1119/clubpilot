@@ -429,7 +429,51 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteAnnouncement: AppState["deleteAnnouncement"] = useCallback((id) => {
     setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+    setReports((prev) => prev.filter((r) => r.postId !== id));
   }, []);
+
+  const mutePost: AppState["mutePost"] = useCallback((postId) => {
+    setMutedPostIds((prev) => (prev.includes(postId) ? prev : [...prev, postId]));
+  }, []);
+  const blockUser: AppState["blockUser"] = useCallback((email) => {
+    const key = email.trim().toLowerCase();
+    if (!key) return;
+    setBlockedEmails((prev) => (prev.includes(key) ? prev : [...prev, key]));
+  }, []);
+  const unblockUser: AppState["unblockUser"] = useCallback((email) => {
+    const key = email.trim().toLowerCase();
+    setBlockedEmails((prev) => prev.filter((e) => e !== key));
+  }, []);
+  const reportPost: AppState["reportPost"] = useCallback((input) => {
+    setReports((prev) => [
+      { id: uid("rep"), ...input, reporterEmail: profile?.email ?? "", createdAt: Date.now() },
+      ...prev,
+    ]);
+    setMutedPostIds((prev) => (prev.includes(input.postId) ? prev : [...prev, input.postId]));
+  }, [profile]);
+
+  const deleteAccount = useCallback(() => {
+    const cur = profile;
+    if (!cur) return;
+    const key = cur.email.trim().toLowerCase();
+    // Remove account record
+    const accounts = loadAccounts();
+    delete accounts[key];
+    save(ACCOUNTS_KEY, accounts);
+    // Remove from team members list
+    if (cur.teamId) {
+      const memKey = ns(cur.teamId, "members")!;
+      const list = load<Profile[]>(memKey, []).filter((m) => m.email.trim().toLowerCase() !== key);
+      save(memKey, list);
+    }
+    // Purge per-user local prefs
+    try {
+      localStorage.removeItem(`cp.user:${cur.email}.mutedPosts`);
+      localStorage.removeItem(`cp.user:${cur.email}.blocked`);
+    } catch { /* noop */ }
+    localStorage.removeItem(PROFILE_KEY);
+    setProfileState(null);
+  }, [profile]);
 
   const isLeader = useMemo(() => {
     if (!profile) return false;
@@ -449,6 +493,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     financeItems, financePayments,
     addFinanceChargeForAll, setPaid, deleteFinanceItem,
     announcements, addAnnouncement, deleteAnnouncement,
+    mutedPostIds, blockedEmails,
+    mutePost, blockUser, unblockUser, reportPost, reports,
+    deleteAccount,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
