@@ -109,9 +109,61 @@ export function MyPage() {
         </ul>
       </section>
 
-      <Button variant="outline" className="w-full" onClick={signOut}>
-        <LogOut className="h-4 w-4" />ログアウト
-      </Button>
+      {blockedEmails.length > 0 && (
+        <section className="rounded-2xl border border-border bg-card p-4 sm:p-5" style={{ boxShadow: "var(--shadow-card)" }}>
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <ShieldOff className="h-4 w-4" />ブロック中のユーザー
+          </h2>
+          <ul className="mt-3 divide-y divide-border rounded-xl border border-border">
+            {blockedEmails.map((em) => {
+              const m = members.find((x) => x.email.trim().toLowerCase() === em);
+              return (
+                <li key={em} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
+                  <span className="truncate">{m?.name ?? em}</span>
+                  <Button size="sm" variant="outline" onClick={() => { unblockUser(em); toast.success("解除しました"); }}>
+                    解除
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      <div className="grid grid-cols-2 gap-2">
+        <Button variant="outline" onClick={signOut}>
+          <LogOut className="h-4 w-4" />ログアウト
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" className="border-rose-500/40 text-rose-500 hover:bg-rose-500/10 hover:text-rose-500">
+              <Trash2 className="h-4 w-4" />アカウント削除
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>本当にアカウントを削除しますか？</AlertDialogTitle>
+              <AlertDialogDescription>
+                この操作は取り消せません。プロフィールおよびログイン情報が完全に削除され、自動的にサインイン画面に戻ります。
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>キャンセル</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-rose-600 text-white hover:bg-rose-700"
+                onClick={() => {
+                  deleteAccount();
+                  toast.success("アカウントを削除しました");
+                }}
+              >
+                削除する
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+
+      <LegalLinks className="pt-1" />
     </div>
   );
 }
