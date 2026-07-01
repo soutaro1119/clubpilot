@@ -107,6 +107,8 @@ export function SettingsPanel() {
           </Button>
         </div>
       </section>
+
+      <LegalLinks className="pt-2" />
     </div>
   );
 }
