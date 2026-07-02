@@ -76,15 +76,21 @@ export function MyPage() {
               </Button>
             </div>
           </div>
-          <div>
-            <label className="mb-1 block text-xs text-muted-foreground">チームパスワード</label>
-            <div className="flex gap-2">
-              <Input readOnly value={profile.teamPassword} />
-              <Button variant="outline" size="icon" onClick={() => copy("pwd", profile.teamPassword)} aria-label="パスワードをコピー">
-                {copied === "pwd" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              </Button>
+          {profile.teamPassword ? (
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">チームパスワード</label>
+              <div className="flex gap-2">
+                <Input readOnly value={profile.teamPassword} />
+                <Button variant="outline" size="icon" onClick={() => copy("pwd", profile.teamPassword)} aria-label="パスワードをコピー">
+                  {copied === "pwd" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <p className="rounded-lg border border-dashed border-border bg-secondary/40 p-2 text-[11px] text-muted-foreground">
+              チームパスワードはこの端末にのみ表示されます。他の端末からログインした場合は、作成した幹部の端末でご確認ください。
+            </p>
+          )}
           <Button onClick={shareViaLine} className="w-full bg-[#06C755] text-white hover:bg-[#05b34c]">
             <Share2 className="h-4 w-4" />チーム情報をLINEで共有
           </Button>
