@@ -14,16 +14,15 @@ type Mode = "login" | "register";
 type TeamMode = "create" | "join";
 
 export function AuthScreen() {
-  const { login, registerNewTeam, joinExistingTeam } = useApp();
+  const { login, registerNewTeam, joinExistingTeam, signInWithGoogle } = useApp();
   const [mode, setMode] = useState<Mode>("login");
   const [step, setStep] = useState<Step>("auth");
   const [remember, setRememberLocal] = useState(true);
+  const [busy, setBusy] = useState(false);
 
-  // auth fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // profile fields
   const [name, setName] = useState("");
   const [role, setRole] = useState<RoleId>("member");
   const [teamMode, setTeamMode] = useState<TeamMode>("create");
@@ -31,43 +30,51 @@ export function AuthScreen() {
   const [teamPassword, setTeamPassword] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
 
-  // a leader role implies they create a team; a member role implies they join one
   const onPickRole = (r: RoleId) => {
     setRole(r);
     const isLeader = !!ROLE_OPTIONS.find((x) => x.id === r)?.leader;
     setTeamMode(isLeader ? "create" : "join");
   };
 
-  const proceedAuth = (e: React.FormEvent) => {
+  const proceedAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setRemember(remember);
     if (mode === "login") {
       if (!email || !password) return toast.error("メールとパスワードを入力してください");
-      const result = login(email, password);
+      setBusy(true);
+      const result = await login(email, password);
+      setBusy(false);
       if (!result.ok) return toast.error(result.error);
       toast.success("ログインしました");
-      // Gate auto-routes to the correct dashboard from the profile.
       return;
     }
-    // register
     if (!email || password.length < 6) {
       return toast.error("メールと6文字以上のパスワードを入力してください");
     }
     setStep("profile");
   };
 
-  const submitProfile = (e: React.FormEvent) => {
+  const submitProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name) return toast.error("名前を入力してください");
     if (!team) return toast.error("チーム名を入力してください");
-    if (!teamPassword) return toast.error("チームパスワードを入力してください");
+    if (!/^\d{4,6}$/.test(teamPassword)) return toast.error("チームパスワードは4〜6桁の数字で入力してください");
     const payload = { email, name, role, team, teamPassword, avatarUrl };
+    setBusy(true);
     const result =
       teamMode === "create"
-        ? registerNewTeam(payload, password)
-        : joinExistingTeam(payload, password);
+        ? await registerNewTeam(payload, password)
+        : await joinExistingTeam(payload, password);
+    setBusy(false);
     if (!result.ok) return toast.error(result.error);
     toast.success(`ようこそ、${name}さん`);
+  };
+
+  const google = async () => {
+    setBusy(true);
+    try { await signInWithGoogle(); }
+    catch (e: any) { toast.error(e?.message ?? "Googleログインに失敗しました"); }
+    finally { setBusy(false); }
   };
 
   return (
@@ -114,10 +121,20 @@ export function AuthScreen() {
                 <Checkbox checked={remember} onCheckedChange={(v) => setRememberLocal(!!v)} />
                 ログイン状態を保持する
               </label>
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full" disabled={busy}>
                 {mode === "login" ? "ログイン" : "次へ：プロフィール作成"}
               </Button>
             </form>
+
+            <div className="my-4 flex items-center gap-2 text-[10px] text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />または<span className="h-px flex-1 bg-border" />
+            </div>
+            <Button variant="outline" className="w-full" onClick={google} disabled={busy}>
+              <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.4-1.6 4.1-5.5 4.1-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.9 1.5l2.6-2.5C16.9 3.6 14.7 2.6 12 2.6 6.8 2.6 2.6 6.8 2.6 12S6.8 21.4 12 21.4c6.9 0 9.5-4.9 9.5-8.4 0-.6-.1-1-.1-1.4H12z"/>
+              </svg>
+              Googleで続行
+            </Button>
           </>
         )}
 
@@ -202,7 +219,7 @@ export function AuthScreen() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full">はじめる</Button>
+            <Button type="submit" className="w-full" disabled={busy}>はじめる</Button>
             <Button type="button" variant="ghost" className="w-full" onClick={() => setStep("auth")}>
               戻る
             </Button>
