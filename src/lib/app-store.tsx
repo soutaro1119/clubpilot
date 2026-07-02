@@ -365,7 +365,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const email = memList.find((m) => m.id === row.user_id)?.email;
           if (!email) continue;
           map[row.event_id] ??= {};
-          map[row.event_id][email] = { status: row.status, reason: row.reason ?? undefined };
+          map[row.event_id][email] = { status: row.status as AttendanceResponse["status"], reason: row.reason ?? undefined };
         }
         setAttendanceState(map);
       } else {
