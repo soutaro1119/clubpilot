@@ -172,8 +172,9 @@ function eventFromRow(r: EventRow, catLabels: Record<string, string>): CalendarE
   };
 }
 function eventToInsert(e: CalendarEvent, teamId: string, userId: string) {
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(e.id);
   return {
-    id: e.id,
+    ...(isUuid ? { id: e.id } : {}),
     team_id: teamId,
     title: e.title,
     event_type: e.eventType,
