@@ -101,6 +101,11 @@ type AppState = {
     password: string,
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
   signInWithGoogle: () => Promise<void>;
+  setupTeam: (
+    mode: "create" | "join",
+    teamName: string,
+    teamPassword: string,
+  ) => Promise<{ ok: true } | { ok: false; error: string }>;
   updateProfile: (patch: Partial<Profile>) => Promise<void>;
   signOut: () => Promise<void>;
 
@@ -516,6 +521,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const setupTeam: AppState["setupTeam"] = useCallback(async (mode, teamName, teamPassword) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+    if (!userId) return { ok: false, error: "ログインが必要です" };
+    if (!teamName.trim()) return { ok: false, error: "チーム名を入力してください" };
+    if (!/^\d{4,6}$/.test(teamPassword)) return { ok: false, error: "チームパスワードは4〜6桁の数字で入力してください" };
+    try {
+      const rpc = mode === "create" ? "create_team" : "join_team";
+      const { data, error } = await supabase.rpc(rpc, { _name: teamName, _password: teamPassword });
+      if (error) throw new Error(error.message);
+      save(tpKey(userId), teamPassword);
+      const fresh = await loadProfileFromUser(userId);
+      if (fresh) {
+        fresh.teamPassword = teamPassword;
+        setProfileState(fresh);
+      }
+      void data;
+      return { ok: true };
+    } catch (e: any) {
+      const msg = String(e?.message ?? e);
+      const map: Record<string, string> = {
+        team_exists: "このチーム名は既に登録されています。別のチーム名を入力するか、既存のチームに参加してください",
+        team_not_found: "そのチーム名は見つかりません。主将が作成したチーム名を再確認してください",
+        invalid_password: "パスワードが違います / 4〜6桁の数字で入力してください",
+        invalid_name: "チーム名を入力してください",
+        not_authenticated: "認証エラーが発生しました。再度お試しください",
+      };
+      const shortErr = Object.keys(map).find((k) => msg.includes(k));
+      return { ok: false, error: shortErr ? map[shortErr] : msg };
+    }
+  }, [loadProfileFromUser]);
+
+
   const updateProfile: AppState["updateProfile"] = useCallback(async (patch) => {
     if (!profile) return;
     const row: any = {};
@@ -748,7 +786,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const value: AppState = {
     profile, isLeader,
-    login, registerNewTeam, joinExistingTeam, signInWithGoogle, updateProfile, signOut,
+    login, registerNewTeam, joinExistingTeam, signInWithGoogle, setupTeam, updateProfile, signOut,
     members,
     events, setEvents,
     categories, setCategories,
