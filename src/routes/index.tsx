@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { AppProvider, useApp } from "@/lib/app-store";
 import { AuthScreen } from "@/components/AuthScreen";
+import { TeamSetupScreen } from "@/components/TeamSetupScreen";
 import { AppHeader } from "@/components/AppHeader";
 import { LeaderDashboard } from "@/components/LeaderDashboard";
 import { MemberDashboard } from "@/components/MemberDashboard";
