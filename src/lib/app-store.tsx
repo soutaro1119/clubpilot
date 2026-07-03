@@ -101,6 +101,11 @@ type AppState = {
     password: string,
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
   signInWithGoogle: () => Promise<void>;
+  setupTeam: (
+    mode: "create" | "join",
+    teamName: string,
+    teamPassword: string,
+  ) => Promise<{ ok: true } | { ok: false; error: string }>;
   updateProfile: (patch: Partial<Profile>) => Promise<void>;
   signOut: () => Promise<void>;
 
