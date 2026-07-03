@@ -114,7 +114,7 @@ export function AuthScreen() {
                 <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" />
               </div>
               <div>
-                <Label className="mb-1 block text-xs">パスワード{mode === "register" && "（6文字以上）"}</Label>
+                <Label className="mb-1 block text-xs">パスワード{mode === "register" && "（6文字以上・数字だけでもOK）"}</Label>
                 <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••" autoComplete={mode === "login" ? "current-password" : "new-password"} />
               </div>
               <label className="flex cursor-pointer items-center gap-2 pt-1 text-xs text-muted-foreground">
