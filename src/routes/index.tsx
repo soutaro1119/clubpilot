@@ -51,6 +51,7 @@ function AppShell() {
 function Gate() {
   const { profile, isLeader } = useApp();
   if (!profile) return <AuthScreen />;
+  if (!profile.teamId) return <TeamSetupScreen />;
   return isLeader ? <Leader /> : <Member />;
 }
 
