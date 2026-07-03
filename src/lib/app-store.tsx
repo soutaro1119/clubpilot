@@ -786,7 +786,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const value: AppState = {
     profile, isLeader,
-    login, registerNewTeam, joinExistingTeam, signInWithGoogle, updateProfile, signOut,
+    login, registerNewTeam, joinExistingTeam, signInWithGoogle, setupTeam, updateProfile, signOut,
     members,
     events, setEvents,
     categories, setCategories,
