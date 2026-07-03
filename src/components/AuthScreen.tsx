@@ -48,8 +48,8 @@ export function AuthScreen() {
       toast.success("ログインしました");
       return;
     }
-    if (!email || password.length < 4) {
-      return toast.error("メールと4文字以上のパスワードを入力してください");
+    if (!email || password.length < 6) {
+      return toast.error("メールと6文字以上のパスワードを入力してください");
     }
     setStep("profile");
   };
