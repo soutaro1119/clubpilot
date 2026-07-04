@@ -19,6 +19,7 @@ export type Database = {
           author_email: string
           author_id: string | null
           author_name: string
+          categories: string[]
           created_at: string
           id: string
           team_id: string
@@ -29,6 +30,7 @@ export type Database = {
           author_email?: string
           author_id?: string | null
           author_name?: string
+          categories?: string[]
           created_at?: string
           id?: string
           team_id: string
@@ -39,6 +41,7 @@ export type Database = {
           author_email?: string
           author_id?: string | null
           author_name?: string
+          categories?: string[]
           created_at?: string
           id?: string
           team_id?: string
@@ -270,30 +273,36 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          category: string | null
           created_at: string
           email: string
           id: string
           name: string
+          position: string | null
           role: Database["public"]["Enums"]["app_role"]
           team_id: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          category?: string | null
           created_at?: string
           email: string
           id: string
           name?: string
+          position?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           team_id?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          category?: string | null
           created_at?: string
           email?: string
           id?: string
           name?: string
+          position?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           team_id?: string | null
           updated_at?: string
