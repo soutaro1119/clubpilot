@@ -93,6 +93,45 @@ export function MyPage() {
             <p className="truncate text-[11px] text-muted-foreground">{profile.email}</p>
           </div>
         </div>
+
+        <div className="mt-4 space-y-3 border-t border-border pt-4">
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">名前</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="氏名" />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">ポジション</label>
+              <Select value={position || "__none"} onValueChange={(v) => setPosition(v === "__none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="選択" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">未設定</SelectItem>
+                  {POSITION_OPTIONS.map((p) => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">所属カテゴリー</label>
+              <Select value={category || "__none"} onValueChange={(v) => setCategory(v === "__none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="選択" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">未設定</SelectItem>
+                  {categories.filter((c) => c.id !== "all").map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            所属カテゴリーを設定すると、幹部が「このカテゴリー宛」に配信した予定・お知らせだけが自分のホームに表示されます。「全員宛」の配信は常に表示されます。
+          </p>
+          <Button className="w-full" onClick={saveProfile} disabled={saving}>
+            <Save className="h-4 w-4" />{saving ? "保存中..." : "プロフィールを保存"}
+          </Button>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-border bg-card p-4 sm:p-5" style={{ boxShadow: "var(--shadow-card)" }}>
