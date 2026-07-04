@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -50,6 +51,7 @@ export function AnnouncementsBoard() {
     deleteAnnouncement,
     isLeader,
     profile,
+    categories,
     mutedPostIds,
     blockedEmails,
     mutePost,
@@ -59,38 +61,56 @@ export function AnnouncementsBoard() {
   } = useApp();
   const [text, setText] = useState("");
   const [when, setWhen] = useState("today");
+  const [targets, setTargets] = useState<string[]>(["all"]);
+
+  const toggleTarget = (id: string) =>
+    setTargets((prev) => {
+      if (id === "all") return ["all"];
+      const without = prev.filter((x) => x !== "all");
+      return without.includes(id) ? without.filter((x) => x !== id) : [...without, id];
+    });
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const t = text.trim();
     if (!t) return toast.error("お知らせ内容を入力してください");
+    const cats = targets.length ? targets : ["all"];
     addAnnouncement({
       text: t,
       when,
       authorName: profile?.name ?? "幹部",
       authorEmail: profile?.email ?? "",
+      categories: cats,
     });
     setText("");
     toast.success("お知らせを投稿しました");
   };
 
   const myEmail = (profile?.email ?? "").trim().toLowerCase();
+  const myCategory = profile?.category ?? "";
   const reportedIds = useMemo(
     () => new Set(reports.map((r) => r.postId)),
     [reports],
   );
 
-  // Members: hide muted posts and posts from blocked authors.
-  // Leaders: see everything (to moderate), with a flag indicator for reported posts.
+  const labelOf = (id: string) =>
+    id === "all" ? "全員" : categories.find((c) => c.id === id)?.label ?? id;
+
+  // Members: hide muted/blocked, and only show announcements whose target
+  // categories include "all" or the member's category. Leaders see everything.
   const visible = useMemo(() => {
-    if (isLeader) return announcements;
     return announcements.filter((a) => {
-      if (mutedPostIds.includes(a.id)) return false;
-      const author = (a.authorEmail ?? "").trim().toLowerCase();
-      if (author && blockedEmails.includes(author)) return false;
+      const cats = a.categories?.length ? a.categories : ["all"];
+      if (!isLeader) {
+        if (mutedPostIds.includes(a.id)) return false;
+        const author = (a.authorEmail ?? "").trim().toLowerCase();
+        if (author && blockedEmails.includes(author)) return false;
+        if (!cats.includes("all") && (!myCategory || !cats.includes(myCategory))) return false;
+      }
       return true;
     });
-  }, [announcements, isLeader, mutedPostIds, blockedEmails]);
+  }, [announcements, isLeader, mutedPostIds, blockedEmails, myCategory]);
+
 
   return (
     <section
