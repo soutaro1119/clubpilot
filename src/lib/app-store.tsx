@@ -267,6 +267,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       teamId: prow.team_id ?? "",
       team: teamName,
       teamPassword,
+      position: (prow as any).position ?? undefined,
+      category: (prow as any).category ?? undefined,
     };
     return p;
   }, []);
@@ -353,6 +355,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         id: m.id, email: m.email, name: m.name || m.email.split("@")[0],
         role: m.role as RoleId, avatarUrl: m.avatar_url ?? undefined,
         teamId: m.team_id, team: profile?.team ?? "", teamPassword: "",
+        position: m.position ?? undefined, category: m.category ?? undefined,
       }));
       setMembers(memList);
 
@@ -362,6 +365,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setAnnouncements((anns.data ?? []).map((a: any) => ({
         id: a.id, text: a.text, when: a.when, authorName: a.author_name,
         authorEmail: a.author_email, createdAt: new Date(a.created_at).getTime(),
+        categories: Array.isArray(a.categories) && a.categories.length ? a.categories : ["all"],
       })));
 
       setFinanceItems((fitems.data ?? []).map((f: any) => ({
@@ -567,6 +571,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (patch.name !== undefined) row.name = patch.name;
     if (patch.role !== undefined) row.role = patch.role;
     if (patch.avatarUrl !== undefined) row.avatar_url = patch.avatarUrl ?? null;
+    if (patch.position !== undefined) row.position = patch.position || null;
+    if (patch.category !== undefined) row.category = patch.category || null;
     if (Object.keys(row).length) {
       await supabase.from("profiles").update(row).eq("id", profile.id);
     }
@@ -714,7 +720,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       await supabase.from("announcements").insert({
         team_id: tid, text: a.text, when: a.when,
         author_id: profile.id, author_name: a.authorName, author_email: a.authorEmail,
-      });
+        categories: a.categories?.length ? a.categories : ["all"],
+      } as any);
     })();
   }, [tid, profile]);
 
