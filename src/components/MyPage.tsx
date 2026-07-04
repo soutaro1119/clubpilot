@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Copy, Check, LogOut, Share2, Users, Trash2, ShieldOff } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Copy, Check, LogOut, Share2, Users, Trash2, ShieldOff, Save } from "lucide-react";
 import { toast } from "sonner";
-import { useApp, roleLabel } from "@/lib/app-store";
+import { useApp, roleLabel, POSITION_OPTIONS } from "@/lib/app-store";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { Avatar } from "@/components/Avatar";
 import { LegalLinks } from "@/components/LegalLinks";
@@ -21,11 +28,38 @@ import {
 
 export function MyPage() {
   const {
-    profile, signOut, isLeader, members, updateProfile,
+    profile, signOut, isLeader, members, updateProfile, categories,
     blockedEmails, unblockUser, deleteAccount,
   } = useApp();
   const [copied, setCopied] = useState<string | null>(null);
+  const [name, setName] = useState(profile?.name ?? "");
+  const [position, setPosition] = useState<string>(profile?.position ?? "");
+  const [category, setCategory] = useState<string>(profile?.category ?? "");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setName(profile?.name ?? "");
+    setPosition(profile?.position ?? "");
+    setCategory(profile?.category ?? "");
+  }, [profile?.id, profile?.name, profile?.position, profile?.category]);
+
   if (!profile) return null;
+
+  const saveProfile = async () => {
+    setSaving(true);
+    try {
+      await updateProfile({
+        name: name.trim() || profile.name,
+        position: position || undefined,
+        category: category || undefined,
+      });
+      toast.success("プロフィールを更新しました");
+    } catch (e: any) {
+      toast.error(e?.message ?? "更新に失敗しました");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const copy = async (key: string, text: string) => {
     await navigator.clipboard.writeText(text);
@@ -58,6 +92,45 @@ export function MyPage() {
             <p className="truncate text-xs text-muted-foreground">{roleLabel(profile.role)}{isLeader ? "（幹部）" : "（部員）"}</p>
             <p className="truncate text-[11px] text-muted-foreground">{profile.email}</p>
           </div>
+        </div>
+
+        <div className="mt-4 space-y-3 border-t border-border pt-4">
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">名前</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="氏名" />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">ポジション</label>
+              <Select value={position || "__none"} onValueChange={(v) => setPosition(v === "__none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="選択" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">未設定</SelectItem>
+                  {POSITION_OPTIONS.map((p) => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">所属カテゴリー</label>
+              <Select value={category || "__none"} onValueChange={(v) => setCategory(v === "__none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="選択" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">未設定</SelectItem>
+                  {categories.filter((c) => c.id !== "all").map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            所属カテゴリーを設定すると、幹部が「このカテゴリー宛」に配信した予定・お知らせだけが自分のホームに表示されます。「全員宛」の配信は常に表示されます。
+          </p>
+          <Button className="w-full" onClick={saveProfile} disabled={saving}>
+            <Save className="h-4 w-4" />{saving ? "保存中..." : "プロフィールを保存"}
+          </Button>
         </div>
       </section>
 
@@ -102,15 +175,24 @@ export function MyPage() {
           <Users className="h-4 w-4" />登録部員（{members.length}名）
         </h2>
         <ul className="mt-3 divide-y divide-border rounded-xl border border-border">
-          {members.map((m) => (
-            <li key={m.email} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
-              <div className="flex min-w-0 items-center gap-2">
-                <Avatar profile={m} size={28} />
-                <span className="truncate">{m.name}</span>
-              </div>
-              <span className="text-[11px] text-muted-foreground">{roleLabel(m.role)}</span>
-            </li>
-          ))}
+          {members.map((m) => {
+            const catLabel = m.category ? categories.find((c) => c.id === m.category)?.label : null;
+            return (
+              <li key={m.email} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
+                <div className="flex min-w-0 items-center gap-2">
+                  <Avatar profile={m} size={28} />
+                  <span className="truncate">{m.name}</span>
+                  {m.position && (
+                    <span className="shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[10px] font-semibold text-secondary-foreground">{m.position}</span>
+                  )}
+                  {catLabel && (
+                    <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">{catLabel}</span>
+                  )}
+                </div>
+                <span className="shrink-0 text-[11px] text-muted-foreground">{roleLabel(m.role)}</span>
+              </li>
+            );
+          })}
           {members.length === 0 && (
             <li className="px-3 py-4 text-center text-xs text-muted-foreground">まだ登録部員がいません</li>
           )}

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -50,6 +51,7 @@ export function AnnouncementsBoard() {
     deleteAnnouncement,
     isLeader,
     profile,
+    categories,
     mutedPostIds,
     blockedEmails,
     mutePost,
@@ -59,38 +61,56 @@ export function AnnouncementsBoard() {
   } = useApp();
   const [text, setText] = useState("");
   const [when, setWhen] = useState("today");
+  const [targets, setTargets] = useState<string[]>(["all"]);
+
+  const toggleTarget = (id: string) =>
+    setTargets((prev) => {
+      if (id === "all") return ["all"];
+      const without = prev.filter((x) => x !== "all");
+      return without.includes(id) ? without.filter((x) => x !== id) : [...without, id];
+    });
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const t = text.trim();
     if (!t) return toast.error("お知らせ内容を入力してください");
+    const cats = targets.length ? targets : ["all"];
     addAnnouncement({
       text: t,
       when,
       authorName: profile?.name ?? "幹部",
       authorEmail: profile?.email ?? "",
+      categories: cats,
     });
     setText("");
     toast.success("お知らせを投稿しました");
   };
 
   const myEmail = (profile?.email ?? "").trim().toLowerCase();
+  const myCategory = profile?.category ?? "";
   const reportedIds = useMemo(
     () => new Set(reports.map((r) => r.postId)),
     [reports],
   );
 
-  // Members: hide muted posts and posts from blocked authors.
-  // Leaders: see everything (to moderate), with a flag indicator for reported posts.
+  const labelOf = (id: string) =>
+    id === "all" ? "全員" : categories.find((c) => c.id === id)?.label ?? id;
+
+  // Members: hide muted/blocked, and only show announcements whose target
+  // categories include "all" or the member's category. Leaders see everything.
   const visible = useMemo(() => {
-    if (isLeader) return announcements;
     return announcements.filter((a) => {
-      if (mutedPostIds.includes(a.id)) return false;
-      const author = (a.authorEmail ?? "").trim().toLowerCase();
-      if (author && blockedEmails.includes(author)) return false;
+      const cats = a.categories?.length ? a.categories : ["all"];
+      if (!isLeader) {
+        if (mutedPostIds.includes(a.id)) return false;
+        const author = (a.authorEmail ?? "").trim().toLowerCase();
+        if (author && blockedEmails.includes(author)) return false;
+        if (!cats.includes("all") && (!myCategory || !cats.includes(myCategory))) return false;
+      }
       return true;
     });
-  }, [announcements, isLeader, mutedPostIds, blockedEmails]);
+  }, [announcements, isLeader, mutedPostIds, blockedEmails, myCategory]);
+
 
   return (
     <section
@@ -131,6 +151,24 @@ export function AnnouncementsBoard() {
               <Send className="h-4 w-4" />
             </Button>
           </div>
+          <div>
+            <p className="mb-1 text-[11px] font-semibold text-muted-foreground">配信対象カテゴリー</p>
+            <div className="flex flex-wrap gap-1.5">
+              <label className={`flex cursor-pointer items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] ${targets.includes("all") ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"}`}>
+                <Checkbox className="h-3 w-3" checked={targets.includes("all")} onCheckedChange={() => toggleTarget("all")} />
+                全員
+              </label>
+              {categories.filter((c) => c.id !== "all").map((c) => {
+                const checked = targets.includes(c.id);
+                return (
+                  <label key={c.id} className={`flex cursor-pointer items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] ${checked ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"}`}>
+                    <Checkbox className="h-3 w-3" checked={checked} onCheckedChange={() => toggleTarget(c.id)} />
+                    {c.label}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
         </form>
       )}
 
@@ -156,6 +194,13 @@ export function AnnouncementsBoard() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="break-words text-sm text-foreground">{a.text}</p>
+                <div className="mt-1 flex flex-wrap items-center gap-1">
+                  {(a.categories?.length ? a.categories : ["all"]).map((cid) => (
+                    <span key={cid} className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                      {labelOf(cid)}宛
+                    </span>
+                  ))}
+                </div>
                 <p className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
                   <span>{a.authorName}・{fmtTime(a.createdAt)}</span>
                   {isLeader && reportedIds.has(a.id) && (
