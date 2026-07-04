@@ -28,16 +28,27 @@ export function MemberDashboard() {
 
   const today = todayKey();
   const me = profile!.email;
+  const myCategory = profile?.category ?? "";
+
+  // Only show events targeted at "all" or the member's own category.
+  const visibleEvents = useMemo(() => {
+    return events.filter((e) => {
+      const cats = e.categories?.length ? e.categories : ["all"];
+      if (cats.includes("all")) return true;
+      if (myCategory && cats.includes(myCategory)) return true;
+      return false;
+    });
+  }, [events, myCategory]);
 
   const hasMorningToday = useMemo(() => {
-    return events.some((e) => {
+    return visibleEvents.some((e) => {
       if (e.date !== today) return false;
       if (e.eventType?.includes("朝練")) return true;
       const t = e.meetingTime || e.startTime;
       if (t && t < "09:00") return true;
       return false;
     });
-  }, [events, today]);
+  }, [visibleEvents, today]);
 
   const awake = !!wakeups[today]?.[me];
   const current = openEvent ? attendance[openEvent.id]?.[me] ?? null : null;
@@ -90,7 +101,7 @@ export function MemberDashboard() {
       )}
 
       <EventCalendar
-        events={events}
+        events={visibleEvents}
         onSelectEvent={openDialog}
         onDeleteEvent={() => { /* members cannot delete */ }}
       />
