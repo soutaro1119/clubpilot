@@ -151,6 +151,24 @@ export function AnnouncementsBoard() {
               <Send className="h-4 w-4" />
             </Button>
           </div>
+          <div>
+            <p className="mb-1 text-[11px] font-semibold text-muted-foreground">配信対象カテゴリー</p>
+            <div className="flex flex-wrap gap-1.5">
+              <label className={`flex cursor-pointer items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] ${targets.includes("all") ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"}`}>
+                <Checkbox className="h-3 w-3" checked={targets.includes("all")} onCheckedChange={() => toggleTarget("all")} />
+                全員
+              </label>
+              {categories.filter((c) => c.id !== "all").map((c) => {
+                const checked = targets.includes(c.id);
+                return (
+                  <label key={c.id} className={`flex cursor-pointer items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] ${checked ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"}`}>
+                    <Checkbox className="h-3 w-3" checked={checked} onCheckedChange={() => toggleTarget(c.id)} />
+                    {c.label}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
         </form>
       )}
 
@@ -176,6 +194,13 @@ export function AnnouncementsBoard() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="break-words text-sm text-foreground">{a.text}</p>
+                <div className="mt-1 flex flex-wrap items-center gap-1">
+                  {(a.categories?.length ? a.categories : ["all"]).map((cid) => (
+                    <span key={cid} className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                      {labelOf(cid)}宛
+                    </span>
+                  ))}
+                </div>
                 <p className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
                   <span>{a.authorName}・{fmtTime(a.createdAt)}</span>
                   {isLeader && reportedIds.has(a.id) && (
