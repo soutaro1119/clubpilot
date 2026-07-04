@@ -20,6 +20,10 @@ export const ROLE_OPTIONS = [
   { id: "student", label: "一般学生", leader: false },
 ] as const;
 
+export const POSITION_OPTIONS = [
+  "FW", "MF", "DF", "GK", "マネージャー", "スタッフ", "その他",
+] as const;
+
 export type RoleId = (typeof ROLE_OPTIONS)[number]["id"];
 
 export type Profile = {
@@ -31,6 +35,8 @@ export type Profile = {
   teamId: string;       // teams.id (UUID) — canonical scope
   role: RoleId;
   avatarUrl?: string;
+  position?: string;    // e.g. FW / MF / DF / GK / マネージャー
+  category?: string;    // team_categories.slug (所属チーム編成)
 };
 
 export type Category = { id: string; label: string };
@@ -57,6 +63,7 @@ export type Announcement = {
   authorName: string;
   authorEmail: string;
   createdAt: number;
+  categories: string[]; // target category slugs; ["all"] = 全員
 };
 
 const DEFAULT_CATEGORIES: Category[] = [
