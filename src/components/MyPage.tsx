@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Copy, Check, LogOut, Share2, Users, Trash2, ShieldOff } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Copy, Check, LogOut, Share2, Users, Trash2, ShieldOff, Save } from "lucide-react";
 import { toast } from "sonner";
-import { useApp, roleLabel } from "@/lib/app-store";
+import { useApp, roleLabel, POSITION_OPTIONS } from "@/lib/app-store";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { Avatar } from "@/components/Avatar";
 import { LegalLinks } from "@/components/LegalLinks";
@@ -21,11 +28,38 @@ import {
 
 export function MyPage() {
   const {
-    profile, signOut, isLeader, members, updateProfile,
+    profile, signOut, isLeader, members, updateProfile, categories,
     blockedEmails, unblockUser, deleteAccount,
   } = useApp();
   const [copied, setCopied] = useState<string | null>(null);
+  const [name, setName] = useState(profile?.name ?? "");
+  const [position, setPosition] = useState<string>(profile?.position ?? "");
+  const [category, setCategory] = useState<string>(profile?.category ?? "");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setName(profile?.name ?? "");
+    setPosition(profile?.position ?? "");
+    setCategory(profile?.category ?? "");
+  }, [profile?.id, profile?.name, profile?.position, profile?.category]);
+
   if (!profile) return null;
+
+  const saveProfile = async () => {
+    setSaving(true);
+    try {
+      await updateProfile({
+        name: name.trim() || profile.name,
+        position: position || undefined,
+        category: category || undefined,
+      });
+      toast.success("プロフィールを更新しました");
+    } catch (e: any) {
+      toast.error(e?.message ?? "更新に失敗しました");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const copy = async (key: string, text: string) => {
     await navigator.clipboard.writeText(text);
