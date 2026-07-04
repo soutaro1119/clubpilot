@@ -175,15 +175,24 @@ export function MyPage() {
           <Users className="h-4 w-4" />登録部員（{members.length}名）
         </h2>
         <ul className="mt-3 divide-y divide-border rounded-xl border border-border">
-          {members.map((m) => (
-            <li key={m.email} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
-              <div className="flex min-w-0 items-center gap-2">
-                <Avatar profile={m} size={28} />
-                <span className="truncate">{m.name}</span>
-              </div>
-              <span className="text-[11px] text-muted-foreground">{roleLabel(m.role)}</span>
-            </li>
-          ))}
+          {members.map((m) => {
+            const catLabel = m.category ? categories.find((c) => c.id === m.category)?.label : null;
+            return (
+              <li key={m.email} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
+                <div className="flex min-w-0 items-center gap-2">
+                  <Avatar profile={m} size={28} />
+                  <span className="truncate">{m.name}</span>
+                  {m.position && (
+                    <span className="shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[10px] font-semibold text-secondary-foreground">{m.position}</span>
+                  )}
+                  {catLabel && (
+                    <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">{catLabel}</span>
+                  )}
+                </div>
+                <span className="shrink-0 text-[11px] text-muted-foreground">{roleLabel(m.role)}</span>
+              </li>
+            );
+          })}
           {members.length === 0 && (
             <li className="px-3 py-4 text-center text-xs text-muted-foreground">まだ登録部員がいません</li>
           )}
